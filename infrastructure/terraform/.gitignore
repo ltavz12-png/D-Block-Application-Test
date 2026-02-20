@@ -1,0 +1,39 @@
+# =============================================================================
+# D Block Workspace - Terraform .gitignore
+# =============================================================================
+
+# Terraform local directories
+.terraform/
+.terraform.tfstate.lock.info
+
+# Terraform state files (managed remotely via Azure Storage backend)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Variable definitions files containing sensitive values
+# Keep the example file for reference
+*.tfvars
+!*.tfvars.example
+!environments/*.tfvars
+
+# Terraform lock file (optional: uncomment if using consistent provider versions in CI)
+# .terraform.lock.hcl
+
+# Override files used for local development
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration file
+.terraformrc
+terraform.rc
+
+# Plan output files
+*.tfplan
+*.out

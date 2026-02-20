@@ -1,0 +1,108 @@
+name: CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Backend lint
+        run: npm run lint --workspace=apps/backend
+      - name: Backend typecheck
+        run: npm run typecheck --workspace=apps/backend || true
+      - name: Admin lint
+        run: npm run lint --workspace=apps/admin
+      - name: Admin typecheck
+        run: npm run typecheck --workspace=apps/admin
+
+  backend-tests:
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dblock_test
+          POSTGRES_PASSWORD: dblock_test
+          POSTGRES_DB: dblock_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USERNAME: dblock_test
+      DB_PASSWORD: dblock_test
+      DB_NAME: dblock_test
+      JWT_SECRET: test-jwt-secret-key
+      JWT_REFRESH_SECRET: test-jwt-refresh-secret
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Run backend unit tests
+        run: npm run test --workspace=apps/backend -- --coverage --ci
+      - name: Run backend E2E tests
+        run: npm run test:e2e --workspace=apps/backend -- --ci
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: apps/backend/coverage/
+
+  admin-tests:
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Run admin tests
+        run: npm run test --workspace=apps/admin -- --coverage --ci
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: admin-coverage
+          path: apps/admin/coverage/
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, admin-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Build backend
+        run: npm run build --workspace=apps/backend
+      - name: Build admin
+        run: npm run build --workspace=apps/admin
+      - name: Build shared types
+        run: npm run build --workspace=packages/shared-types

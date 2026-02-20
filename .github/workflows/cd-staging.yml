@@ -1,0 +1,253 @@
+# ============================================================================
+# D Block Workspace - Staging Continuous Deployment
+# ============================================================================
+# Triggers on push to develop branch (after CI passes).
+# Builds Docker images, deploys backend to Azure App Service staging slot,
+# deploys admin panel, and runs smoke tests.
+# ============================================================================
+
+name: CD - Staging
+
+on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+
+env:
+  ACR_REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
+  IMAGE_NAME: dblock-backend
+  AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+  ADMIN_WEBAPP_NAME: ${{ secrets.AZURE_ADMIN_WEBAPP_NAME }}
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 1: Build Docker image and push to Azure Container Registry
+  # ────────────────────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    environment: staging
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag }}
+      image-full: ${{ steps.meta.outputs.full }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate image metadata
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::8}"
+          TAG="staging-${SHORT_SHA}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "full=${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Image tag: ${TAG}"
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:staging-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=staging
+
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.full }}
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+        continue-on-error: true
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 2: Deploy backend to Azure App Service staging slot
+  # ────────────────────────────────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: staging
+
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to App Service staging slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: staging
+          images: ${{ needs.build-and-push.outputs.image-full }}
+
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Health check - staging slot
+        id: health-check
+        run: |
+          STAGING_URL="https://${{ env.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net"
+          MAX_RETRIES=12
+          RETRY_INTERVAL=10
+
+          echo "Checking health at ${STAGING_URL}/api/v1/health"
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "${STAGING_URL}/api/v1/health" \
+              --connect-timeout 10 \
+              --max-time 15 || echo "000")
+
+            echo "Attempt ${i}/${MAX_RETRIES}: HTTP ${HTTP_STATUS}"
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Health check passed."
+              exit 0
+            fi
+
+            if [ "$i" -lt "$MAX_RETRIES" ]; then
+              echo "Retrying in ${RETRY_INTERVAL}s..."
+              sleep $RETRY_INTERVAL
+            fi
+          done
+
+          echo "Health check failed after ${MAX_RETRIES} attempts."
+          exit 1
+
+      - name: Azure logout
+        if: always()
+        run: az logout
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 3: Build and deploy admin panel
+  # ────────────────────────────────────────────────────────────────────────
+  deploy-admin:
+    name: Deploy Admin Panel to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build admin panel
+        run: npm run build --workspace=apps/admin
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.STAGING_API_URL }}
+          NEXT_PUBLIC_WS_URL: ${{ secrets.STAGING_WS_URL }}
+          NEXT_PUBLIC_ENVIRONMENT: staging
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy admin to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.ADMIN_WEBAPP_NAME }}
+          slot-name: staging
+          package: apps/admin/.next
+
+      - name: Azure logout
+        if: always()
+        run: az logout
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 4: Run smoke tests against staging environment
+  # ────────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Staging Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-admin]
+    environment: staging
+
+    steps:
+      - name: Run smoke tests
+        run: |
+          STAGING_URL="https://${{ env.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net"
+          ADMIN_URL="https://${{ env.ADMIN_WEBAPP_NAME }}-staging.azurewebsites.net"
+          PASSED=0
+          FAILED=0
+
+          check_endpoint() {
+            local name="$1"
+            local url="$2"
+            local expected_status="${3:-200}"
+
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "$url" --connect-timeout 10 --max-time 15 || echo "000")
+
+            if [ "$HTTP_STATUS" = "$expected_status" ]; then
+              echo "[PASS] ${name} - HTTP ${HTTP_STATUS}"
+              PASSED=$((PASSED + 1))
+            else
+              echo "[FAIL] ${name} - Expected ${expected_status}, got ${HTTP_STATUS}"
+              FAILED=$((FAILED + 1))
+            fi
+          }
+
+          echo "================================================"
+          echo "  D Block Staging Smoke Tests"
+          echo "================================================"
+          echo ""
+
+          # Backend health check
+          check_endpoint "Backend Health Check" "${STAGING_URL}/api/v1/health"
+
+          # Auth endpoint reachability (should return 401 without token)
+          check_endpoint "Auth Endpoint" "${STAGING_URL}/api/v1/auth/profile" "401"
+
+          # Swagger docs accessible
+          check_endpoint "Swagger Docs" "${STAGING_URL}/api/docs"
+
+          # API root
+          check_endpoint "API Root" "${STAGING_URL}/api/v1"
+
+          # Admin panel
+          check_endpoint "Admin Panel" "${ADMIN_URL}"
+
+          echo ""
+          echo "================================================"
+          echo "  Results: ${PASSED} passed, ${FAILED} failed"
+          echo "================================================"
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "Smoke tests failed!"
+            exit 1
+          fi
+
+          echo "All smoke tests passed."

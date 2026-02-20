@@ -1,0 +1,91 @@
+{
+  "app_store_connect": {
+    "app_name": "D Block Workspace",
+    "subtitle": "Smart Coworking Management",
+    "bundle_id": "com.adjaragroup.dblock.workspace",
+    "sku": "DBLOCK_WORKSPACE_IOS",
+    "primary_category": "BUSINESS",
+    "secondary_category": "PRODUCTIVITY",
+    "primary_locale": "en-US",
+    "age_rating": "4+",
+    "pricing": {
+      "price_tier": 0,
+      "note": "Free to download; in-app purchases for coworking passes and bookings"
+    },
+    "availability": {
+      "territories": ["GEO", "USA", "GBR", "DEU", "FRA", "TUR", "ARE"],
+      "note": "Initially available in Georgia; expand territories as needed"
+    },
+    "content_rights": {
+      "does_app_contain_third_party_content": false,
+      "has_rights_to_content": true
+    },
+    "app_review_information": {
+      "demo_account_name": "{{DEMO_ACCOUNT_EMAIL}}",
+      "demo_account_password": "{{DEMO_ACCOUNT_PASSWORD}}",
+      "notes_for_reviewer": "D Block Workspace is a coworking space management app for members of D Block coworking spaces in Tbilisi and Batumi, Georgia. BLE door unlock functionality requires physical presence at one of our locations. A demo account is provided for review purposes.",
+      "contact_first_name": "{{REVIEWER_CONTACT_FIRST_NAME}}",
+      "contact_last_name": "{{REVIEWER_CONTACT_LAST_NAME}}",
+      "contact_phone": "{{REVIEWER_CONTACT_PHONE}}",
+      "contact_email": "{{REVIEWER_CONTACT_EMAIL}}"
+    },
+    "urls": {
+      "privacy_policy_url": "https://dblock.ge/privacy-policy",
+      "support_url": "https://dblock.ge/support",
+      "marketing_url": "https://dblock.ge"
+    },
+    "localizations": {
+      "en-US": {
+        "name": "D Block Workspace",
+        "subtitle": "Smart Coworking Management",
+        "description": "D Block Workspace is your all-in-one coworking space management app, built by Adjara Group for members of D Block coworking spaces in Tbilisi and Batumi, Georgia.\n\nBOOK SPACES INSTANTLY\nReserve meeting rooms, hot desks, private offices, phone booths, parking spots, lockers, and event spaces across all D Block locations -- Stamba Hotel and Radio City in Tbilisi, and Rooms Hotel in Batumi.\n\nFLEXIBLE COWORKING PASSES\nChoose the plan that fits your schedule. Purchase hourly, daily, weekly, monthly, quarterly, or annual passes directly from the app.\n\nSMART ACCESS CONTROL\nUnlock doors seamlessly using Bluetooth Low Energy (BLE) technology. No keys, no cards -- just your phone.\n\nBUSINESS ACCOUNT MANAGEMENT\nManage your company's coworking account, add or remove team members, control employee access permissions, and track usage across your organization.\n\nBILLING & INVOICES\nView your invoices, track payment history, and pay directly through the app with secure payment processing.\n\nVISITOR REGISTRATION\nRegister guests and visitors quickly. Generate visitor passes so your guests can access the space without hassle.\n\nCREDITS & PROMOTIONS\nEarn credits through referrals, apply promo codes, and manage your credit balance for future bookings.\n\nLOCATIONS\n- Stamba Hotel, 14 Merab Kostava St, Tbilisi\n- Radio City, 3 Akhvlediani Ascent, Tbilisi\n- Rooms Hotel Batumi, 1 Ninoshvili St, Batumi\n\nD Block Workspace requires an active D Block membership. Download the app and start managing your coworking experience today.",
+        "keywords": "coworking,workspace,booking,office,meeting room,hot desk,Tbilisi,Batumi,D Block,Stamba,desk booking,smart office,BLE,access control,Georgia",
+        "promotional_text": "Book desks, meeting rooms, and offices at D Block coworking spaces. Unlock doors with your phone. Manage your workspace effortlessly.",
+        "whats_new": "Welcome to D Block Workspace v1.0.0! Book spaces, unlock doors, manage your coworking membership, and more -- all from your phone."
+      },
+      "ka": {
+        "name": "D Block Workspace",
+        "subtitle": "ქოუორქინგის მართვა",
+        "description": "D Block Workspace არის თქვენი ქოუორქინგ სივრცის მართვის ყოვლისმომცველი აპლიკაცია, შექმნილი ადჯარა გრუპის მიერ D Block-ის წევრებისთვის თბილისსა და ბათუმში.\n\nდაჯავშნეთ სივრცეები მყისიერად\nდაჯავშნეთ საკონფერენციო ოთახები, ცხელი მაგიდები, კერძო ოფისები, სატელეფონო კაბინები, პარკინგის ადგილები, საკეტები და ღონისძიებების სივრცეები D Block-ის ყველა ლოკაციაზე -- სტამბა სასტუმრო და რადიო სითი თბილისში, და რუმს სასტუმრო ბათუმში.\n\nმოქნილი ქოუორქინგ აბონემენტები\nაირჩიეთ თქვენთვის შესაფერისი გეგმა. შეიძინეთ საათობრივი, დღიური, კვირეული, თვიური, კვარტალური ან წლიური აბონემენტები პირდაპირ აპლიკაციიდან.\n\nჭკვიანი წვდომის კონტროლი\nგახსენით კარები Bluetooth Low Energy (BLE) ტექნოლოგიით. არანაირი გასაღები, არანაირი ბარათი -- მხოლოდ თქვენი ტელეფონი.\n\nბიზნეს ანგარიშის მართვა\nმართეთ თქვენი კომპანიის ქოუორქინგ ანგარიში, დაამატეთ ან წაშალეთ გუნდის წევრები, აკონტროლეთ თანამშრომლების წვდომის უფლებები და თვალყური ადევნეთ გამოყენებას მთელ ორგანიზაციაში.\n\nბილინგი და ინვოისები\nნახეთ თქვენი ინვოისები, თვალყური ადევნეთ გადახდების ისტორიას და გადაიხადეთ პირდაპირ აპლიკაციიდან უსაფრთხო გადახდის დამუშავებით.\n\nვიზიტორთა რეგისტრაცია\nსწრაფად დაარეგისტრირეთ სტუმრები და ვიზიტორები. შექმენით სტუმრების აბონემენტები, რათა თქვენმა სტუმრებმა უპრობლემოდ მიიღონ წვდომა სივრცეზე.\n\nკრედიტები და პრომოციები\nმოიპოვეთ კრედიტები რეფერალებით, გამოიყენეთ პრომო კოდები და მართეთ კრედიტის ბალანსი მომავალი დაჯავშნებისთვის.\n\nლოკაციები\n- სტამბა სასტუმრო, მერაბ კოსტავას ქ. 14, თბილისი\n- რადიო სითი, ახვლედიანის აღმართი 3, თბილისი\n- რუმს სასტუმრო ბათუმი, ნინოშვილის ქ. 1, ბათუმი\n\nD Block Workspace მოითხოვს აქტიურ D Block-ის წევრობას. ჩამოტვირთეთ აპლიკაცია და დაიწყეთ თქვენი ქოუორქინგ გამოცდილების მართვა დღესვე.",
+        "keywords": "ქოუორქინგი,სამუშაო სივრცე,დაჯავშნა,ოფისი,საკონფერენციო,მაგიდა,თბილისი,ბათუმი,D Block,სტამბა,ჭკვიანი ოფისი,წვდომა,საქართველო",
+        "promotional_text": "დაჯავშნეთ მაგიდები, საკონფერენციო ოთახები და ოფისები D Block-ის ქოუორქინგ სივრცეებში. გახსენით კარები ტელეფონით. მართეთ სამუშაო სივრცე მარტივად.",
+        "whats_new": "კეთილი იყოს თქვენი მობრძანება D Block Workspace v1.0.0-ში! დაჯავშნეთ სივრცეები, გახსენით კარები, მართეთ ქოუორქინგ წევრობა და მეტი -- ყველაფერი თქვენი ტელეფონიდან."
+      }
+    },
+    "in_app_purchases": {
+      "note": "Configure in-app purchase products for coworking passes",
+      "types": [
+        {
+          "reference_name": "Hourly Pass",
+          "product_id": "com.adjaragroup.dblock.pass.hourly",
+          "type": "CONSUMABLE"
+        },
+        {
+          "reference_name": "Daily Pass",
+          "product_id": "com.adjaragroup.dblock.pass.daily",
+          "type": "CONSUMABLE"
+        },
+        {
+          "reference_name": "Weekly Pass",
+          "product_id": "com.adjaragroup.dblock.pass.weekly",
+          "type": "NON_RENEWING_SUBSCRIPTION"
+        },
+        {
+          "reference_name": "Monthly Pass",
+          "product_id": "com.adjaragroup.dblock.pass.monthly",
+          "type": "AUTO_RENEWABLE_SUBSCRIPTION"
+        },
+        {
+          "reference_name": "Quarterly Pass",
+          "product_id": "com.adjaragroup.dblock.pass.quarterly",
+          "type": "AUTO_RENEWABLE_SUBSCRIPTION"
+        },
+        {
+          "reference_name": "Annual Pass",
+          "product_id": "com.adjaragroup.dblock.pass.annual",
+          "type": "AUTO_RENEWABLE_SUBSCRIPTION"
+        }
+      ]
+    }
+  }
+}

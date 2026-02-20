@@ -1,0 +1,30 @@
+{
+  "name": "dblock-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "D Block Workspace - Coworking management platform",
+  "workspaces": [
+    "apps/backend",
+    "apps/admin",
+    "apps/mobile",
+    "packages/*"
+  ],
+  "scripts": {
+    "backend:dev": "npm run dev --workspace=apps/backend",
+    "backend:build": "npm run build --workspace=apps/backend",
+    "backend:test": "npm run test --workspace=apps/backend",
+    "admin:dev": "npm run dev --workspace=apps/admin",
+    "admin:build": "npm run build --workspace=apps/admin",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/supertest": "^6.0.3"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.39.0"
+  }
+}

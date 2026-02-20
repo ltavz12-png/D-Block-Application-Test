@@ -1,0 +1,370 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dashboardName": {
+      "type": "string",
+      "defaultValue": "dblock-workspace-dashboard",
+      "metadata": {
+        "description": "Name of the Azure Portal dashboard"
+      }
+    },
+    "appInsightsResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Application Insights instance"
+      }
+    },
+    "appServiceResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Azure App Service"
+      }
+    },
+    "postgresResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Azure Database for PostgreSQL"
+      }
+    },
+    "redisResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Azure Cache for Redis"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Portal/dashboards",
+      "apiVersion": "2020-09-01-preview",
+      "name": "[parameters('dashboardName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "project": "dblock-workspace",
+        "environment": "production",
+        "hidden-title": "D Block Workspace - Operations Dashboard"
+      },
+      "properties": {
+        "lenses": [
+          {
+            "order": 0,
+            "parts": [
+              {
+                "position": { "x": 0, "y": 0, "colSpan": 3, "rowSpan": 2 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Total Requests (24h)",
+                      "query": "requests | where timestamp > ago(24h) | summarize count()",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "card"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 3, "y": 0, "colSpan": 3, "rowSpan": 2 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Error Rate (24h)",
+                      "query": "requests | where timestamp > ago(24h) | summarize total = count(), errors = countif(resultCode >= 500) | extend error_rate = round(100.0 * errors / total, 2) | project strcat(error_rate, '%')",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "card"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 6, "y": 0, "colSpan": 3, "rowSpan": 2 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Avg Response Time (24h)",
+                      "query": "requests | where timestamp > ago(24h) | summarize avg_ms = round(avg(duration), 1) | project strcat(avg_ms, ' ms')",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "card"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 9, "y": 0, "colSpan": 3, "rowSpan": 2 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Active Users (24h)",
+                      "query": "requests | where timestamp > ago(24h) | summarize dcount(user_Id)",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "card"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 0, "y": 2, "colSpan": 6, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Request Rate Over Time",
+                      "query": "requests | where timestamp > ago(24h) | summarize count() by bin(timestamp, 5m) | render timechart",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 6, "y": 2, "colSpan": 6, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Error Rate by Endpoint",
+                      "query": "requests | where timestamp > ago(24h) and resultCode >= 500 | summarize error_count = count() by name | top 10 by error_count | render barchart",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "barchart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 0, "y": 6, "colSpan": 12, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "P95 Latency Over Time",
+                      "query": "requests | where timestamp > ago(24h) | summarize p95 = percentile(duration, 95) by bin(timestamp, 5m) | render timechart",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 0, "y": 10, "colSpan": 4, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Database - Connection Pool",
+                      "subtitle": "Active Connections",
+                      "metrics": [
+                        {
+                          "resourceId": "[parameters('postgresResourceId')]",
+                          "metricName": "active_connections",
+                          "aggregation": "Average",
+                          "timespan": "PT24H",
+                          "timeGrain": "PT5M"
+                        }
+                      ],
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 4, "y": 10, "colSpan": 4, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Database - Query Duration (P95)",
+                      "query": "dependencies | where timestamp > ago(24h) and type == 'SQL' | summarize p95 = percentile(duration, 95) by bin(timestamp, 5m) | render timechart",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 8, "y": 10, "colSpan": 4, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Database - Active Connections",
+                      "metrics": [
+                        {
+                          "resourceId": "[parameters('postgresResourceId')]",
+                          "metricName": "connections_failed",
+                          "aggregation": "Total",
+                          "timespan": "PT24H",
+                          "timeGrain": "PT5M"
+                        }
+                      ],
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 0, "y": 14, "colSpan": 4, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Redis - Memory Usage",
+                      "metrics": [
+                        {
+                          "resourceId": "[parameters('redisResourceId')]",
+                          "metricName": "usedmemory",
+                          "aggregation": "Maximum",
+                          "timespan": "PT24H",
+                          "timeGrain": "PT5M"
+                        }
+                      ],
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 4, "y": 14, "colSpan": 4, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Redis - Cache Hit Rate",
+                      "metrics": [
+                        {
+                          "resourceId": "[parameters('redisResourceId')]",
+                          "metricName": "cachehits",
+                          "aggregation": "Total",
+                          "timespan": "PT24H",
+                          "timeGrain": "PT5M"
+                        },
+                        {
+                          "resourceId": "[parameters('redisResourceId')]",
+                          "metricName": "cachemisses",
+                          "aggregation": "Total",
+                          "timespan": "PT24H",
+                          "timeGrain": "PT5M"
+                        }
+                      ],
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 8, "y": 14, "colSpan": 4, "rowSpan": 4 },
+                "metadata": {
+                  "type": "Extension/HubsExtension/PartType/MonitorChartPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Redis - Connected Clients",
+                      "metrics": [
+                        {
+                          "resourceId": "[parameters('redisResourceId')]",
+                          "metricName": "connectedclients",
+                          "aggregation": "Maximum",
+                          "timespan": "PT24H",
+                          "timeGrain": "PT5M"
+                        }
+                      ],
+                      "visualization": "linechart"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 0, "y": 18, "colSpan": 4, "rowSpan": 3 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Active Bookings (Today)",
+                      "query": "customMetrics | where timestamp > ago(1h) and name == 'active_bookings_today' | summarize arg_max(timestamp, value) | project round(value, 0)",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "card"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 4, "y": 18, "colSpan": 4, "rowSpan": 3 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Revenue Today (GEL)",
+                      "query": "customMetrics | where timestamp > ago(1h) and name == 'revenue_today_gel' | summarize arg_max(timestamp, value) | project round(value, 2)",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "card"
+                    }
+                  }
+                }
+              },
+              {
+                "position": { "x": 8, "y": 18, "colSpan": 4, "rowSpan": 3 },
+                "metadata": {
+                  "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+                  "inputs": [],
+                  "settings": {
+                    "content": {
+                      "title": "Occupancy Rate (%)",
+                      "query": "customMetrics | where timestamp > ago(1h) and name == 'occupancy_rate_percent' | summarize arg_max(timestamp, value) | project round(value, 1)",
+                      "resourceId": "[parameters('appInsightsResourceId')]",
+                      "visualization": "card"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "metadata": {
+          "model": {
+            "timeRange": {
+              "value": { "relative": { "duration": 24, "timeUnit": 1 } },
+              "type": "MsPortalFx.Composition.Configuration.ValueTypes.TimeRange"
+            },
+            "filterLocale": { "value": "en-us" },
+            "filters": {
+              "value": {
+                "MsPortalFx_TimeRange": {
+                  "model": {
+                    "format": "utc",
+                    "granularity": "auto",
+                    "relative": "24h"
+                  },
+                  "displayCache": { "name": "UTC Time", "value": "Past 24 hours" },
+                  "filteredPartIds": []
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "dashboardResourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Portal/dashboards', parameters('dashboardName'))]"
+    }
+  }
+}

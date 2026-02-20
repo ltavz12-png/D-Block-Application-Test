@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "D Block Workspace",
+    "slug": "dblock-workspace",
+    "scheme": "dblock",
+    "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A1A2E"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.adjaragroup.dblock",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "We use Bluetooth to connect to door locks for workspace access.",
+        "NSLocationWhenInUseUsageDescription": "We use your location to find nearby workspaces.",
+        "NSCameraUsageDescription": "We use the camera to scan QR codes for check-in."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1A1A2E"
+      },
+      "package": "com.adjaragroup.dblock",
+      "versionCode": 1
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "EXPO_PROJECT_ID_HERE"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/EXPO_PROJECT_ID_HERE"
+    },
+    "owner": "adjaragroup"
+  }
+}

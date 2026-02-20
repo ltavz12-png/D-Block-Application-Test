@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # ─── PostgreSQL Database ──────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: dblock-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dblock
+      POSTGRES_PASSWORD: dblock_dev
+      POSTGRES_DB: dblock_workspace
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dblock -d dblock_workspace']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis Cache ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: dblock-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend API ──────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dblock-backend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      API_PREFIX: api/v1
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: dblock
+      DB_PASSWORD: dblock_dev
+      DB_NAME: dblock_workspace
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      JWT_EXPIRATION: 15m
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production
+      JWT_REFRESH_EXPIRATION: 7d
+      APP_URL: http://localhost:3000
+      ADMIN_URL: http://localhost:3001
+
+  # ─── pgAdmin (Development Only) ──────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dblock-pgadmin
+    restart: unless-stopped
+    profiles:
+      - dev-tools
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@dblock.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - '5050:80'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:

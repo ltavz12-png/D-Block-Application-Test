@@ -1,0 +1,66 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "search": "Search",
+    "noResults": "No results found"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "loginTitle": "Login",
+    "registerTitle": "Register",
+    "orContinueWith": "Or continue with",
+    "phone": "Phone",
+    "otp": "OTP",
+    "sendOtp": "Send OTP",
+    "verifyOtp": "Verify OTP",
+    "verify": "Verify",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "termsAndConditions": "Terms and Conditions",
+    "loginWithPhone": "Login with Phone"
+  },
+  "tabs": {
+    "home": "Home",
+    "bookings": "Bookings",
+    "access": "Access",
+    "profile": "Profile"
+  },
+  "home": {
+    "welcome": "Welcome",
+    "quickBook": "Quick Book",
+    "recentBookings": "Recent Bookings",
+    "creditBalance": "Credit Balance"
+  },
+  "booking": {
+    "selectLocation": "Select Location",
+    "selectResource": "Select Resource",
+    "selectDate": "Select Date",
+    "selectTime": "Select Time",
+    "confirmBooking": "Confirm Booking",
+    "bookingConfirmed": "Booking Confirmed"
+  },
+  "profile": {
+    "settings": "Settings",
+    "language": "Language",
+    "notifications": "Notifications",
+    "twoFactor": "Two-Factor Authentication",
+    "logout": "Logout",
+    "editProfile": "Edit Profile",
+    "helpSupport": "Help & Support"
+  }
+}

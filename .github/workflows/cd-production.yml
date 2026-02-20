@@ -1,0 +1,395 @@
+# ============================================================================
+# D Block Workspace - Production Continuous Deployment
+# ============================================================================
+# Triggers on push to main branch or manual dispatch.
+# Uses blue/green deployment strategy with slot swaps.
+# Requires manual approval via GitHub environment protection rules.
+# ============================================================================
+
+name: CD - Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      skip-smoke-tests:
+        description: 'Skip smoke tests after deployment'
+        required: false
+        default: 'false'
+        type: boolean
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  ACR_REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}
+  IMAGE_NAME: dblock-backend
+  AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+  ADMIN_WEBAPP_NAME: ${{ secrets.AZURE_ADMIN_WEBAPP_NAME }}
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 1: Build Docker image and push to Azure Container Registry
+  # ────────────────────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag }}
+      image-full: ${{ steps.meta.outputs.full }}
+      short-sha: ${{ steps.meta.outputs.short-sha }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate image metadata
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::8}"
+          TAG="production-${SHORT_SHA}"
+          FULL="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "full=${FULL}" >> "$GITHUB_OUTPUT"
+          echo "short-sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Image tag: ${TAG}"
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.full }}
+          format: table
+          exit-code: 1
+          severity: CRITICAL
+        continue-on-error: false
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 2: Deploy backend with slot swap (blue/green)
+  # ────────────────────────────────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    steps:
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to staging slot (pre-production)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: staging
+          images: ${{ needs.build-and-push.outputs.image-full }}
+
+      - name: Wait for staging slot to stabilize
+        run: sleep 30
+
+      - name: Health check on staging slot
+        run: |
+          STAGING_URL="https://${{ env.AZURE_WEBAPP_NAME }}-staging.azurewebsites.net"
+          MAX_RETRIES=15
+          RETRY_INTERVAL=10
+
+          echo "Running health check on staging slot before swap..."
+          echo "URL: ${STAGING_URL}/api/v1/health"
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "${STAGING_URL}/api/v1/health" \
+              --connect-timeout 10 \
+              --max-time 15 || echo "000")
+
+            echo "Attempt ${i}/${MAX_RETRIES}: HTTP ${HTTP_STATUS}"
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Staging slot health check passed. Ready for swap."
+              exit 0
+            fi
+
+            if [ "$i" -lt "$MAX_RETRIES" ]; then
+              sleep $RETRY_INTERVAL
+            fi
+          done
+
+          echo "Staging slot health check failed. Aborting swap."
+          exit 1
+
+      - name: Swap staging slot to production
+        run: |
+          echo "Swapping staging -> production for ${{ env.AZURE_WEBAPP_NAME }}..."
+          az webapp deployment slot swap \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --slot staging \
+            --target-slot production
+          echo "Slot swap completed."
+
+      - name: Verify production health after swap
+        run: |
+          PROD_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          MAX_RETRIES=10
+          RETRY_INTERVAL=10
+
+          echo "Verifying production after swap..."
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "${PROD_URL}/api/v1/health" \
+              --connect-timeout 10 \
+              --max-time 15 || echo "000")
+
+            echo "Attempt ${i}/${MAX_RETRIES}: HTTP ${HTTP_STATUS}"
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Production health check passed."
+              exit 0
+            fi
+
+            sleep $RETRY_INTERVAL
+          done
+
+          echo "WARNING: Production health check failed after swap!"
+          echo "Consider rolling back with: az webapp deployment slot swap --slot production --target-slot staging"
+          exit 1
+
+      - name: Azure logout
+        if: always()
+        run: az logout
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 3: Build and deploy admin panel to production
+  # ────────────────────────────────────────────────────────────────────────
+  deploy-admin:
+    name: Deploy Admin Panel to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build admin panel
+        run: npm run build --workspace=apps/admin
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+          NEXT_PUBLIC_WS_URL: ${{ secrets.PRODUCTION_WS_URL }}
+          NEXT_PUBLIC_ENVIRONMENT: production
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy admin to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.ADMIN_WEBAPP_NAME }}
+          package: apps/admin/.next
+
+      - name: Azure logout
+        if: always()
+        run: az logout
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 4: Run production smoke tests
+  # ────────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Production Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-admin]
+    if: ${{ github.event.inputs.skip-smoke-tests != 'true' }}
+    environment: production
+
+    steps:
+      - name: Run production smoke tests
+        run: |
+          PROD_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          ADMIN_URL="https://${{ env.ADMIN_WEBAPP_NAME }}.azurewebsites.net"
+          PASSED=0
+          FAILED=0
+
+          check_endpoint() {
+            local name="$1"
+            local url="$2"
+            local expected_status="${3:-200}"
+
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "$url" --connect-timeout 10 --max-time 15 || echo "000")
+
+            if [ "$HTTP_STATUS" = "$expected_status" ]; then
+              echo "[PASS] ${name} - HTTP ${HTTP_STATUS}"
+              PASSED=$((PASSED + 1))
+            else
+              echo "[FAIL] ${name} - Expected ${expected_status}, got ${HTTP_STATUS}"
+              FAILED=$((FAILED + 1))
+            fi
+          }
+
+          echo "================================================"
+          echo "  D Block Production Smoke Tests"
+          echo "================================================"
+          echo ""
+
+          # Backend health check
+          check_endpoint "Backend Health Check" "${PROD_URL}/api/v1/health"
+
+          # Auth endpoint reachability
+          check_endpoint "Auth Endpoint" "${PROD_URL}/api/v1/auth/profile" "401"
+
+          # Swagger docs (may be disabled in production)
+          check_endpoint "Swagger Docs" "${PROD_URL}/api/docs"
+
+          # API root
+          check_endpoint "API Root" "${PROD_URL}/api/v1"
+
+          # Locations endpoint
+          check_endpoint "Locations API" "${PROD_URL}/api/v1/locations"
+
+          # Admin panel
+          check_endpoint "Admin Panel" "${ADMIN_URL}"
+
+          echo ""
+          echo "================================================"
+          echo "  Results: ${PASSED} passed, ${FAILED} failed"
+          echo "================================================"
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "Production smoke tests failed!"
+            exit 1
+          fi
+
+          echo "All production smoke tests passed."
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Job 5: Send deployment notification
+  # ────────────────────────────────────────────────────────────────────────
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-backend, deploy-admin, smoke-test]
+    if: always()
+    environment: production
+
+    steps:
+      - name: Determine deployment status
+        id: status
+        run: |
+          if [ "${{ needs.deploy-backend.result }}" = "success" ] && \
+             [ "${{ needs.deploy-admin.result }}" = "success" ]; then
+            echo "status=success" >> "$GITHUB_OUTPUT"
+            echo "emoji=white_check_mark" >> "$GITHUB_OUTPUT"
+            echo "color=00FF00" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failure" >> "$GITHUB_OUTPUT"
+            echo "emoji=x" >> "$GITHUB_OUTPUT"
+            echo "color=FF0000" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "D Block Production Deployment: ${{ steps.status.outputs.status }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":${{ steps.status.outputs.emoji }}: D Block Production Deployment"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n${{ steps.status.outputs.status }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Image Tag:*\n${{ needs.build-and-push.outputs.image-tag }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ needs.build-and-push.outputs.short-sha }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.actor }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: Send Teams notification
+        if: ${{ secrets.TEAMS_WEBHOOK_URL != '' }}
+        run: |
+          curl -s -X POST "${{ secrets.TEAMS_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "@type": "MessageCard",
+              "@context": "http://schema.org/extensions",
+              "themeColor": "${{ steps.status.outputs.color }}",
+              "summary": "D Block Production Deployment: ${{ steps.status.outputs.status }}",
+              "sections": [{
+                "activityTitle": "D Block Production Deployment",
+                "facts": [
+                  {"name": "Status", "value": "${{ steps.status.outputs.status }}"},
+                  {"name": "Image Tag", "value": "${{ needs.build-and-push.outputs.image-tag }}"},
+                  {"name": "Commit", "value": "${{ needs.build-and-push.outputs.short-sha }}"},
+                  {"name": "Triggered by", "value": "${{ github.actor }}"}
+                ],
+                "markdown": true
+              }],
+              "potentialAction": [{
+                "@type": "OpenUri",
+                "name": "View Run",
+                "targets": [{"os": "default", "uri": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}]
+              }]
+            }'

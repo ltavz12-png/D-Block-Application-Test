@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test
+coverage/
+.nyc_output/
+k6/results/
+!k6/results/.gitkeep
+
+# Docker
+docker-compose.override.yml
+
+# Misc
+*.tgz
+*.log
+
+# React Native
+apps/mobile/ios/Pods/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Expo
+apps/mobile/.expo/
+apps/mobile/web-build/
+apps/mobile/ios/
+apps/mobile/android/
+
+# EAS
+apps/mobile/eas-build-*.json
+
+# Staging/Production env files (contain real credentials)
+apps/backend/.env.staging
+apps/backend/.env.production
+
+# Keep example env files
+!.env.example
+!apps/backend/.env.example

@@ -1,0 +1,66 @@
+{
+  "common": {
+    "loading": "იტვირთება...",
+    "error": "შეცდომა",
+    "retry": "ხელახლა ცდა",
+    "cancel": "გაუქმება",
+    "save": "შენახვა",
+    "confirm": "დადასტურება",
+    "back": "უკან",
+    "next": "შემდეგი",
+    "done": "მზადაა",
+    "search": "ძიება",
+    "noResults": "შედეგები ვერ მოიძებნა"
+  },
+  "auth": {
+    "login": "შესვლა",
+    "register": "რეგისტრაცია",
+    "email": "ელფოსტა",
+    "password": "პაროლი",
+    "forgotPassword": "დაგავიწყდათ პაროლი?",
+    "resetPassword": "პაროლის აღდგენა",
+    "loginTitle": "შესვლა",
+    "registerTitle": "რეგისტრაცია",
+    "orContinueWith": "ან გააგრძელეთ",
+    "phone": "ტელეფონი",
+    "otp": "ერთჯერადი კოდი",
+    "sendOtp": "კოდის გაგზავნა",
+    "verifyOtp": "კოდის დადასტურება",
+    "verify": "დადასტურება",
+    "firstName": "სახელი",
+    "lastName": "გვარი",
+    "alreadyHaveAccount": "უკვე გაქვთ ანგარიში?",
+    "dontHaveAccount": "არ გაქვთ ანგარიში?",
+    "termsAndConditions": "წესები და პირობები",
+    "loginWithPhone": "ტელეფონით შესვლა"
+  },
+  "tabs": {
+    "home": "მთავარი",
+    "bookings": "ჯავშნები",
+    "access": "წვდომა",
+    "profile": "პროფილი"
+  },
+  "home": {
+    "welcome": "მოგესალმებით",
+    "quickBook": "სწრაფი ჯავშანი",
+    "recentBookings": "ბოლო ჯავშნები",
+    "creditBalance": "კრედიტის ბალანსი"
+  },
+  "booking": {
+    "selectLocation": "აირჩიეთ ლოკაცია",
+    "selectResource": "აირჩიეთ რესურსი",
+    "selectDate": "აირჩიეთ თარიღი",
+    "selectTime": "აირჩიეთ დრო",
+    "confirmBooking": "ჯავშნის დადასტურება",
+    "bookingConfirmed": "ჯავშანი დადასტურებულია"
+  },
+  "profile": {
+    "settings": "პარამეტრები",
+    "language": "ენა",
+    "notifications": "შეტყობინებები",
+    "twoFactor": "ორფაქტორიანი ავთენტიფიკაცია",
+    "logout": "გასვლა",
+    "editProfile": "პროფილის რედაქტირება",
+    "helpSupport": "დახმარება"
+  }
+}

@@ -1,0 +1,371 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appInsightsResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Application Insights instance"
+      }
+    },
+    "appServiceResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Azure App Service"
+      }
+    },
+    "postgresResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Azure Database for PostgreSQL"
+      }
+    },
+    "redisResourceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Azure Cache for Redis"
+      }
+    },
+    "actionGroupId": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource ID of the Action Group for alert notifications"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2023-03-15-preview",
+      "name": "dblock-high-error-rate",
+      "location": "[resourceGroup().location]",
+      "tags": { "project": "dblock-workspace", "alert-category": "availability" },
+      "properties": {
+        "displayName": "High Error Rate (>5% 5xx in 5 min)",
+        "description": "Triggers when more than 5% of requests return 5xx status codes within a 5-minute window.",
+        "severity": 1,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "scopes": ["[parameters('appInsightsResourceId')]"],
+        "criteria": {
+          "allOf": [
+            {
+              "query": "requests | where timestamp > ago(5m) | summarize total = count(), errors = countif(toint(resultCode) >= 500) | extend error_pct = 100.0 * errors / total | where error_pct > 5",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": ["[parameters('actionGroupId')]"],
+          "customProperties": {
+            "runbook": "https://wiki.internal/runbooks/high-error-rate",
+            "team": "backend"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2023-03-15-preview",
+      "name": "dblock-slow-response-time",
+      "location": "[resourceGroup().location]",
+      "tags": { "project": "dblock-workspace", "alert-category": "performance" },
+      "properties": {
+        "displayName": "Slow Response Time (P95 > 2s for 5 min)",
+        "description": "Triggers when P95 response time exceeds 2 seconds for 5 consecutive minutes.",
+        "severity": 2,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "scopes": ["[parameters('appInsightsResourceId')]"],
+        "criteria": {
+          "allOf": [
+            {
+              "query": "requests | where timestamp > ago(5m) | summarize p95 = percentile(duration, 95) | where p95 > 2000",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 5,
+                "minFailingPeriodsToAlert": 5
+              }
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": ["[parameters('actionGroupId')]"],
+          "customProperties": {
+            "runbook": "https://wiki.internal/runbooks/slow-response",
+            "team": "backend"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "dblock-high-cpu",
+      "location": "global",
+      "tags": { "project": "dblock-workspace", "alert-category": "infrastructure" },
+      "properties": {
+        "description": "Triggers when CPU usage exceeds 85% for 10 consecutive minutes.",
+        "severity": 2,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT10M",
+        "scopes": ["[parameters('appServiceResourceId')]"],
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "HighCPU",
+              "metricName": "CpuPercentage",
+              "operator": "GreaterThan",
+              "threshold": 85,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[parameters('actionGroupId')]",
+            "webHookProperties": {
+              "runbook": "https://wiki.internal/runbooks/high-cpu",
+              "team": "infrastructure"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "dblock-high-memory",
+      "location": "global",
+      "tags": { "project": "dblock-workspace", "alert-category": "infrastructure" },
+      "properties": {
+        "description": "Triggers when memory usage exceeds 85% for 10 consecutive minutes.",
+        "severity": 2,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT10M",
+        "scopes": ["[parameters('appServiceResourceId')]"],
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "HighMemory",
+              "metricName": "MemoryPercentage",
+              "operator": "GreaterThan",
+              "threshold": 85,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[parameters('actionGroupId')]",
+            "webHookProperties": {
+              "runbook": "https://wiki.internal/runbooks/high-memory",
+              "team": "infrastructure"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "dblock-db-connection-pool-exhaustion",
+      "location": "global",
+      "tags": { "project": "dblock-workspace", "alert-category": "database" },
+      "properties": {
+        "description": "Triggers when database connection pool usage exceeds 90%, indicating potential exhaustion.",
+        "severity": 1,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "scopes": ["[parameters('postgresResourceId')]"],
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "ConnectionPoolExhaustion",
+              "metricName": "active_connections",
+              "operator": "GreaterThan",
+              "threshold": 90,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[parameters('actionGroupId')]",
+            "webHookProperties": {
+              "runbook": "https://wiki.internal/runbooks/db-connections",
+              "team": "backend"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "dblock-redis-high-memory",
+      "location": "global",
+      "tags": { "project": "dblock-workspace", "alert-category": "cache" },
+      "properties": {
+        "description": "Triggers when Redis memory usage exceeds 80% of the allocated limit.",
+        "severity": 2,
+        "enabled": true,
+        "evaluationFrequency": "PT5M",
+        "windowSize": "PT15M",
+        "scopes": ["[parameters('redisResourceId')]"],
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "RedisHighMemory",
+              "metricName": "usedmemorypercentage",
+              "operator": "GreaterThan",
+              "threshold": 80,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[parameters('actionGroupId')]",
+            "webHookProperties": {
+              "runbook": "https://wiki.internal/runbooks/redis-memory",
+              "team": "infrastructure"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2023-03-15-preview",
+      "name": "dblock-failed-health-checks",
+      "location": "[resourceGroup().location]",
+      "tags": { "project": "dblock-workspace", "alert-category": "availability" },
+      "properties": {
+        "displayName": "Failed Health Checks (3 consecutive)",
+        "description": "Triggers when 3 consecutive health check requests fail or return unhealthy status.",
+        "severity": 1,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "scopes": ["[parameters('appInsightsResourceId')]"],
+        "criteria": {
+          "allOf": [
+            {
+              "query": "requests | where timestamp > ago(5m) and name contains '/health' | where toint(resultCode) >= 500 or resultCode == '503' | summarize failures = count() | where failures >= 3",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": ["[parameters('actionGroupId')]"],
+          "customProperties": {
+            "runbook": "https://wiki.internal/runbooks/health-check-failure",
+            "team": "backend"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2023-03-15-preview",
+      "name": "dblock-payment-failure-spike",
+      "location": "[resourceGroup().location]",
+      "tags": { "project": "dblock-workspace", "alert-category": "business" },
+      "properties": {
+        "displayName": "Payment Failure Spike (>10% failure rate)",
+        "description": "Triggers when more than 10% of payment operations fail within a 5-minute window. Indicates possible payment gateway issues.",
+        "severity": 1,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "scopes": ["[parameters('appInsightsResourceId')]"],
+        "criteria": {
+          "allOf": [
+            {
+              "query": "customEvents | where timestamp > ago(5m) and name startswith 'payment_' | summarize total = count(), failures = countif(name == 'payment_failed') | where total > 0 | extend failure_pct = 100.0 * failures / total | where failure_pct > 10",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": ["[parameters('actionGroupId')]"],
+          "customProperties": {
+            "runbook": "https://wiki.internal/runbooks/payment-failures",
+            "team": "payments"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2023-03-15-preview",
+      "name": "dblock-auth-brute-force",
+      "location": "[resourceGroup().location]",
+      "tags": { "project": "dblock-workspace", "alert-category": "security" },
+      "properties": {
+        "displayName": "Auth Brute Force (>20 failed logins from same IP in 5 min)",
+        "description": "Triggers when a single IP address generates more than 20 failed authentication attempts within 5 minutes.",
+        "severity": 1,
+        "enabled": true,
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "scopes": ["[parameters('appInsightsResourceId')]"],
+        "criteria": {
+          "allOf": [
+            {
+              "query": "requests | where timestamp > ago(5m) and url contains '/auth/login' and toint(resultCode) == 401 | summarize attempts = count() by client_IP | where attempts > 20",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": ["[parameters('actionGroupId')]"],
+          "customProperties": {
+            "runbook": "https://wiki.internal/runbooks/brute-force",
+            "team": "security"
+          }
+        }
+      }
+    }
+  ]
+}

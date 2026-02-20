@@ -1,0 +1,104 @@
+{
+  "google_play_store": {
+    "package_name": "com.adjaragroup.dblock.workspace",
+    "default_language": "en-US",
+    "category": "BUSINESS",
+    "content_rating": "Everyone",
+    "target_audience": "18+",
+    "contains_ads": false,
+    "in_app_purchases": true,
+    "pricing": {
+      "free": true,
+      "note": "Free to download; in-app purchases for coworking passes and bookings"
+    },
+    "distribution": {
+      "countries": ["GE", "US", "GB", "DE", "FR", "TR", "AE"],
+      "note": "Initially available in Georgia; expand as needed"
+    },
+    "contact_details": {
+      "email": "{{SUPPORT_EMAIL}}",
+      "phone": "{{SUPPORT_PHONE}}",
+      "website": "https://dblock.ge"
+    },
+    "privacy_policy_url": "https://dblock.ge/privacy-policy",
+    "store_listing": {
+      "en-US": {
+        "title": "D Block Workspace",
+        "short_description": "Book coworking spaces, unlock doors with BLE, manage passes & invoices at D Block locations in Tbilisi and Batumi.",
+        "full_description": "D Block Workspace is your all-in-one coworking space management app, built by Adjara Group for members of D Block coworking spaces in Tbilisi and Batumi, Georgia.\n\n<b>BOOK SPACES INSTANTLY</b>\nReserve meeting rooms, hot desks, private offices, phone booths, parking spots, lockers, and event spaces across all D Block locations -- Stamba Hotel and Radio City in Tbilisi, and Rooms Hotel in Batumi.\n\n<b>FLEXIBLE COWORKING PASSES</b>\nChoose the plan that fits your schedule. Purchase hourly, daily, weekly, monthly, quarterly, or annual passes directly from the app.\n\n<b>SMART ACCESS CONTROL</b>\nUnlock doors seamlessly using Bluetooth Low Energy (BLE) technology powered by SaltoKS. No keys, no cards -- just your phone.\n\n<b>BUSINESS ACCOUNT MANAGEMENT</b>\nManage your company's coworking account, add or remove team members, control employee access permissions, and track usage across your organization.\n\n<b>BILLING & INVOICES</b>\nView your invoices, track payment history, and pay directly through the app with secure payment processing via Bank of Georgia and TBC Bank.\n\n<b>VISITOR REGISTRATION</b>\nRegister guests and visitors quickly. Generate visitor passes so your guests can access the space without hassle.\n\n<b>CREDITS & PROMOTIONS</b>\nEarn credits through referrals, apply promo codes, and manage your credit balance for future bookings.\n\n<b>LOCATIONS</b>\n\u2022 Stamba Hotel, 14 Merab Kostava St, Tbilisi\n\u2022 Radio City, 3 Akhvlediani Ascent, Tbilisi\n\u2022 Rooms Hotel Batumi, 1 Ninoshvili St, Batumi\n\nD Block Workspace requires an active D Block membership. Download the app and start managing your coworking experience today.",
+        "feature_graphic_description": "Feature graphic should display the D Block Workspace logo on a branded background with the tagline 'Smart Coworking Management' and a subtle depiction of a modern coworking environment. Dimensions: 1024 x 500 px."
+      },
+      "ka": {
+        "title": "D Block Workspace",
+        "short_description": "დაჯავშნეთ ქოუორქინგ სივრცეები, გახსენით კარები BLE-ით, მართეთ აბონემენტები და ინვოისები D Block-ის ლოკაციებზე თბილისსა და ბათუმში.",
+        "full_description": "D Block Workspace არის თქვენი ქოუორქინგ სივრცის მართვის ყოვლისმომცველი აპლიკაცია, შექმნილი ადჯარა გრუპის მიერ D Block-ის წევრებისთვის თბილისსა და ბათუმში.\n\n<b>დაჯავშნეთ სივრცეები მყისიერად</b>\nდაჯავშნეთ საკონფერენციო ოთახები, ცხელი მაგიდები, კერძო ოფისები, სატელეფონო კაბინები, პარკინგის ადგილები, საკეტები და ღონისძიებების სივრცეები D Block-ის ყველა ლოკაციაზე -- სტამბა სასტუმრო და რადიო სითი თბილისში, და რუმს სასტუმრო ბათუმში.\n\n<b>მოქნილი ქოუორქინგ აბონემენტები</b>\nაირჩიეთ თქვენთვის შესაფერისი გეგმა. შეიძინეთ საათობრივი, დღიური, კვირეული, თვიური, კვარტალური ან წლიური აბონემენტები პირდაპირ აპლიკაციიდან.\n\n<b>ჭკვიანი წვდომის კონტროლი</b>\nგახსენით კარები Bluetooth Low Energy (BLE) ტექნოლოგიით SaltoKS-ის მეშვეობით. არანაირი გასაღები, არანაირი ბარათი -- მხოლოდ თქვენი ტელეფონი.\n\n<b>ბიზნეს ანგარიშის მართვა</b>\nმართეთ თქვენი კომპანიის ქოუორქინგ ანგარიში, დაამატეთ ან წაშალეთ გუნდის წევრები, აკონტროლეთ თანამშრომლების წვდომის უფლებები და თვალყური ადევნეთ გამოყენებას მთელ ორგანიზაციაში.\n\n<b>ბილინგი და ინვოისები</b>\nნახეთ თქვენი ინვოისები, თვალყური ადევნეთ გადახდების ისტორიას და გადაიხადეთ პირდაპირ აპლიკაციიდან უსაფრთხო გადახდის დამუშავებით საქართველოს ბანკისა და თიბისი ბანკის მეშვეობით.\n\n<b>ვიზიტორთა რეგისტრაცია</b>\nსწრაფად დაარეგისტრირეთ სტუმრები და ვიზიტორები. შექმენით სტუმრების აბონემენტები, რათა თქვენმა სტუმრებმა უპრობლემოდ მიიღონ წვდომა სივრცეზე.\n\n<b>კრედიტები და პრომოციები</b>\nმოიპოვეთ კრედიტები რეფერალებით, გამოიყენეთ პრომო კოდები და მართეთ კრედიტის ბალანსი მომავალი დაჯავშნებისთვის.\n\n<b>ლოკაციები</b>\n\u2022 სტამბა სასტუმრო, მერაბ კოსტავას ქ. 14, თბილისი\n\u2022 რადიო სითი, ახვლედიანის აღმართი 3, თბილისი\n\u2022 რუმს სასტუმრო ბათუმი, ნინოშვილის ქ. 1, ბათუმი\n\nD Block Workspace მოითხოვს აქტიურ D Block-ის წევრობას. ჩამოტვირთეთ აპლიკაცია და დაიწყეთ თქვენი ქოუორქინგ გამოცდილების მართვა დღესვე.",
+        "feature_graphic_description": "ფიჩერ გრაფიკაზე უნდა იყოს D Block Workspace-ის ლოგო ბრენდირებულ ფონზე სლოგანით 'ქოუორქინგის მართვა' და თანამედროვე ქოუორქინგ გარემოს ილუსტრაციით. ზომები: 1024 x 500 px."
+      }
+    },
+    "content_rating_questionnaire": {
+      "violence": "NO",
+      "sexual_content": "NO",
+      "language": "NO",
+      "controlled_substance": "NO",
+      "personal_information": "YES",
+      "personal_information_details": "App collects user name, email, phone number, and company information for account management and booking purposes.",
+      "user_generated_content": "NO",
+      "account_creation": "REQUIRED",
+      "government_id": "NO"
+    },
+    "app_access": {
+      "requires_login": true,
+      "test_account": {
+        "email": "{{DEMO_ACCOUNT_EMAIL}}",
+        "password": "{{DEMO_ACCOUNT_PASSWORD}}",
+        "instructions": "Use the provided demo account to access all app features. BLE door unlock requires physical proximity to a D Block location."
+      }
+    },
+    "data_safety": {
+      "data_collected": [
+        {
+          "type": "Personal info",
+          "details": "Name, email address, phone number",
+          "purpose": "App functionality, Account management",
+          "shared": false
+        },
+        {
+          "type": "Financial info",
+          "details": "Purchase history, payment information (processed by BOG/TBC)",
+          "purpose": "App functionality",
+          "shared": false
+        },
+        {
+          "type": "Location",
+          "details": "Approximate location via BLE for door access",
+          "purpose": "App functionality",
+          "shared": false
+        },
+        {
+          "type": "App activity",
+          "details": "In-app search history, app interactions",
+          "purpose": "Analytics, App functionality",
+          "shared": false
+        },
+        {
+          "type": "App info and performance",
+          "details": "Crash logs, diagnostics",
+          "purpose": "Analytics",
+          "shared": false
+        },
+        {
+          "type": "Device or other IDs",
+          "details": "Device ID for BLE access control",
+          "purpose": "App functionality, Security",
+          "shared": true,
+          "shared_with": "SaltoKS (access control provider)"
+        }
+      ],
+      "security_practices": {
+        "data_encrypted_in_transit": true,
+        "data_deletion_request": true,
+        "independent_security_review": false
+      }
+    }
+  }
+}
