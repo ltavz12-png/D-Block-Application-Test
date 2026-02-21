@@ -61,6 +61,11 @@ apps/mobile/android/
 
 # EAS
 apps/mobile/eas-build-*.json
+apps/mobile/app-store/
+apps/mobile/dist/
+
+# Vercel
+.vercel/
 
 # Staging/Production env files (contain real credentials)
 apps/backend/.env.staging

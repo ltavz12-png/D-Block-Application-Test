@@ -15,9 +15,10 @@
       }
     },
     "preview": {
-      "distribution": "internal",
+      "distribution": "store",
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "appleTeamId": "GC28LY5WZK"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://dblock-staging.azurewebsites.net/api/v1"
@@ -27,7 +28,8 @@
     "production": {
       "autoIncrement": true,
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "appleTeamId": "GC28LY5WZK"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://dblock.azurewebsites.net/api/v1"
@@ -36,15 +38,14 @@
     }
   },
   "submit": {
+    "preview": {
+      "ios": {
+        "appleTeamId": "GC28LY5WZK"
+      }
+    },
     "production": {
       "ios": {
-        "appleId": "APPLE_ID_HERE",
-        "ascAppId": "ASC_APP_ID_HERE",
-        "appleTeamId": "APPLE_TEAM_ID_HERE"
-      },
-      "android": {
-        "serviceAccountKeyPath": "./google-services-key.json",
-        "track": "internal"
+        "appleTeamId": "GC28LY5WZK"
       }
     }
   }

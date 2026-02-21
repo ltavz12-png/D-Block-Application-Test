@@ -15,7 +15,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#1A1A2E"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.adjaragroup.dblock",
@@ -23,7 +25,8 @@
       "infoPlist": {
         "NSBluetoothAlwaysUsageDescription": "We use Bluetooth to connect to door locks for workspace access.",
         "NSLocationWhenInUseUsageDescription": "We use your location to find nearby workspaces.",
-        "NSCameraUsageDescription": "We use the camera to scan QR codes for check-in."
+        "NSCameraUsageDescription": "We use the camera to scan QR codes for check-in.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -46,14 +49,17 @@
     "experiments": {
       "typedRoutes": true
     },
+    "owner": "ltavz12",
     "extra": {
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "EXPO_PROJECT_ID_HERE"
+        "projectId": "81987810-6587-41bb-92d9-385306394846"
       }
     },
     "updates": {
-      "url": "https://u.expo.dev/EXPO_PROJECT_ID_HERE"
-    },
-    "owner": "adjaragroup"
+      "url": "https://u.expo.dev/81987810-6587-41bb-92d9-385306394846"
+    }
   }
 }
