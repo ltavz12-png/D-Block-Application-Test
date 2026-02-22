@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "D Block Workspace",
-    "slug": "dblock-workspace",
+    "slug": "d-block-application-testing",
     "scheme": "dblock",
     "version": "1.0.0",
     "runtimeVersion": {
@@ -56,11 +56,11 @@
         "origin": false
       },
       "eas": {
-        "projectId": "81987810-6587-41bb-92d9-385306394846"
+        "projectId": "80175473-057d-44d6-82fc-5aabde941585"
       }
     },
     "updates": {
-      "url": "https://u.expo.dev/81987810-6587-41bb-92d9-385306394846"
+      "url": "https://u.expo.dev/80175473-057d-44d6-82fc-5aabde941585"
     }
   }
 }
