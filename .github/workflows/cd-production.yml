@@ -9,17 +9,20 @@
 name: CD - Production
 
 on:
-  # Disabled automatic deploy — enable when Azure infrastructure is ready
+  # Fully disabled — no Azure infrastructure provisioned yet.
+  # Uncomment workflow_dispatch (and optionally push) when Azure is ready.
+  #
+  # workflow_dispatch:
+  #   inputs:
+  #     skip-smoke-tests:
+  #       description: 'Skip smoke tests after deployment'
+  #       required: false
+  #       default: 'false'
+  #       type: boolean
   # push:
   #   branches:
   #     - main
   workflow_dispatch:
-    inputs:
-      skip-smoke-tests:
-        description: 'Skip smoke tests after deployment'
-        required: false
-        default: 'false'
-        type: boolean
 
 concurrency:
   group: production-deploy
