@@ -18,7 +18,8 @@
       "autoIncrement": true,
       "distribution": "store",
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "image": "macos-sequoia-15.6-xcode-26.0"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://dblock-staging.azurewebsites.net/api/v1"
@@ -28,7 +29,8 @@
     "production": {
       "autoIncrement": true,
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "image": "macos-sequoia-15.6-xcode-26.0"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://dblock.azurewebsites.net/api/v1"
