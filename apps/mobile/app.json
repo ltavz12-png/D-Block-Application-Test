@@ -3,10 +3,8 @@
     "name": "D Block Workspace",
     "slug": "d-block-application-testing",
     "scheme": "dblock",
-    "version": "1.0.0",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "version": "1.0.1",
+    "runtimeVersion": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -48,7 +46,8 @@
       "expo-secure-store"
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "reactCompiler": false
     },
     "owner": "ltavz12",
     "extra": {
@@ -60,7 +59,7 @@
       }
     },
     "updates": {
-      "url": "https://u.expo.dev/80175473-057d-44d6-82fc-5aabde941585"
+      "enabled": false
     }
   }
 }

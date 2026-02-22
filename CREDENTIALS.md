@@ -314,7 +314,9 @@ Auth, Users, Locations, Resources, Bookings, Products, Payments, Passes, Credits
 
 ### TestFlight
 - **App Name**: D Block Workspace
-- **TestFlight Link**: https://testflight.apple.com/join/YOUR_INVITE_CODE *(update after first build)*
+- **Latest Build**: #8 (SDK 54, iOS 26 SDK, Xcode 26) — submitted 2026-02-22
+- **Build Logs**: https://expo.dev/accounts/ltavz12/projects/d-block-application-testing/builds/1fa53a99-5b0a-4065-b510-7c4f8244a1d6
+- **TestFlight Link**: *(check App Store Connect → TestFlight → D Block Workspace for invite link)*
 
 ### Local Development URLs
 | Service | URL |
