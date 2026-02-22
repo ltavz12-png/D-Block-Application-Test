@@ -74,9 +74,13 @@ export async function clearTokens(): Promise<void> {
 
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const { accessToken } = await getTokens();
-    if (accessToken && config.headers) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+    try {
+      const { accessToken } = await getTokens();
+      if (accessToken && config.headers) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
+    } catch {
+      // SecureStore may be unavailable — proceed without auth header
     }
     return config;
   },
@@ -149,7 +153,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        await clearTokens();
+        try { await clearTokens(); } catch { /* ignore */ }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

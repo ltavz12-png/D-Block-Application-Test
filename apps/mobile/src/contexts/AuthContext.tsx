@@ -55,7 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function loadUser() {
       try {
-        const { accessToken } = await getTokens();
+        // SecureStore can throw on first launch or fresh iOS installs
+        let accessToken: string | null = null;
+        try {
+          const tokens = await getTokens();
+          accessToken = tokens.accessToken;
+        } catch {
+          // SecureStore unavailable — treat as logged out
+        }
         if (!accessToken) {
           if (mounted) {
             setState({ user: null, isAuthenticated: false, isLoading: false });
@@ -68,7 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setState({ user, isAuthenticated: true, isLoading: false });
         }
       } catch {
-        await clearTokens();
+        try {
+          await clearTokens();
+        } catch {
+          // SecureStore may fail on some iOS builds — ignore
+        }
         if (mounted) {
           setState({ user: null, isAuthenticated: false, isLoading: false });
         }

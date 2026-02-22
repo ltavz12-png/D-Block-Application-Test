@@ -10,7 +10,17 @@ const resources = {
   ka: { translation: ka },
 };
 
-const deviceLanguage = getLocales()[0]?.languageCode ?? 'en';
+// Safe locale detection — getLocales() can throw or return empty on some iOS builds
+let deviceLanguage = 'en';
+try {
+  const locales = getLocales();
+  if (locales?.length > 0 && locales[0]?.languageCode) {
+    deviceLanguage = locales[0].languageCode;
+  }
+} catch {
+  // Fallback to English
+}
+
 const supportedLanguages = ['en', 'ka'];
 const defaultLanguage = supportedLanguages.includes(deviceLanguage)
   ? deviceLanguage
