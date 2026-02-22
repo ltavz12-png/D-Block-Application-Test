@@ -15,6 +15,7 @@
       }
     },
     "preview": {
+      "autoIncrement": true,
       "distribution": "store",
       "ios": {
         "simulator": false
@@ -38,12 +39,14 @@
   "submit": {
     "preview": {
       "ios": {
-        "appleTeamId": "GC28LY5WZK"
+        "appleTeamId": "GC28LY5WZK",
+        "ascAppId": "6759481833"
       }
     },
     "production": {
       "ios": {
-        "appleTeamId": "GC28LY5WZK"
+        "appleTeamId": "GC28LY5WZK",
+        "ascAppId": "6759481833"
       }
     }
   }
