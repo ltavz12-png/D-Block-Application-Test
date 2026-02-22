@@ -10,9 +10,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '@/constants/theme';
+import MembershipBadge from '@/components/ui/MembershipBadge';
+import { useMyActivePasses } from '@/hooks/api';
+import { deriveTier } from '@/utils/membership';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -53,11 +57,7 @@ function SettingsItem({
         </Text>
       </View>
       {showChevron && (
-        <Ionicons
-          name="chevron-forward"
-          size={20}
-          color={Colors.textSecondary}
-        />
+        <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
       )}
     </TouchableOpacity>
   );
@@ -66,34 +66,18 @@ function SettingsItem({
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const router = useRouter();
+  const { data: activePasses } = useMyActivePasses();
 
   const displayName = user
     ? `${user.firstName} ${user.lastName}`
     : 'Guest User';
   const displayEmail = user?.email ?? 'guest@example.com';
-
-  function handleEditProfile() {
-    // TODO: Navigate to edit profile screen
-  }
-
-  function handleLanguage() {
-    // TODO: Navigate to language settings
-  }
-
-  function handleNotifications() {
-    // TODO: Navigate to notification settings
-  }
-
-  function handleTwoFactor() {
-    // TODO: Navigate to 2FA settings
-  }
-
-  function handleHelpSupport() {
-    // TODO: Navigate to help & support
-  }
+  const activePass = activePasses?.[0];
+  const activeTier = activePass ? deriveTier(activePass.product?.name ?? '') : null;
 
   function handleLogout() {
-    Alert.alert(t('profile.logout'), 'Are you sure you want to logout?', [
+    Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('profile.logout'),
@@ -109,7 +93,6 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
@@ -117,48 +100,91 @@ export default function ProfileScreen() {
             </View>
           </View>
           <Text style={styles.profileName}>{displayName}</Text>
+          {activeTier && (
+            <MembershipBadge tier={activeTier} style={{ marginBottom: Spacing.xs }} />
+          )}
           <Text style={styles.profileEmail}>{displayEmail}</Text>
         </View>
 
-        {/* Settings List */}
+        {/* Account Section */}
         <View style={styles.settingsSection}>
           <SettingsItem
             icon="person-outline"
             label={t('profile.editProfile')}
-            onPress={handleEditProfile}
+            onPress={() => router.push('/profile/edit')}
           />
           <View style={styles.separator} />
           <SettingsItem
+            icon="card-outline"
+            label={t('membership.title')}
+            onPress={() => router.push('/profile/membership')}
+          />
+          <View style={styles.separator} />
+          <SettingsItem
+            icon="wallet-outline"
+            label={t('paymentMethods.title')}
+            onPress={() => router.push('/profile/payment-methods')}
+          />
+          <View style={styles.separator} />
+          <SettingsItem
+            icon="person-add-outline"
+            label={t('visitors.inviteVisitor')}
+            onPress={() => router.push('/profile/invite-visitor')}
+          />
+        </View>
+
+        {/* Preferences Section */}
+        <View style={[styles.settingsSection, { marginTop: Spacing.lg }]}>
+          <SettingsItem
             icon="language-outline"
             label={t('profile.language')}
-            onPress={handleLanguage}
+            onPress={() => router.push('/profile/language')}
           />
           <View style={styles.separator} />
           <SettingsItem
             icon="notifications-outline"
             label={t('profile.notifications')}
-            onPress={handleNotifications}
+            onPress={() => router.push('/profile/notifications')}
+          />
+          <View style={styles.separator} />
+          <SettingsItem
+            icon="mail-outline"
+            label={t('notifications.title')}
+            onPress={() => router.push('/profile/notifications-list')}
           />
           <View style={styles.separator} />
           <SettingsItem
             icon="shield-checkmark-outline"
             label={t('profile.twoFactor')}
-            onPress={handleTwoFactor}
-          />
-          <View style={styles.separator} />
-          <SettingsItem
-            icon="help-circle-outline"
-            label={t('profile.helpSupport')}
-            onPress={handleHelpSupport}
+            onPress={() => {
+              Alert.alert(t('profile.twoFactor'), 'Two-factor authentication setup coming soon.');
+            }}
           />
         </View>
 
-        {/* Logout */}
-        <View style={styles.logoutSection}>
+        {/* Support & Legal Section */}
+        <View style={[styles.settingsSection, { marginTop: Spacing.lg }]}>
+          <SettingsItem
+            icon="help-circle-outline"
+            label={t('profile.helpSupport')}
+            onPress={() => router.push('/profile/support')}
+          />
+        </View>
+
+        {/* Danger Zone */}
+        <View style={[styles.settingsSection, { marginTop: Spacing.lg }]}>
           <SettingsItem
             icon="log-out-outline"
             label={t('profile.logout')}
             onPress={handleLogout}
+            showChevron={false}
+            danger
+          />
+          <View style={styles.separator} />
+          <SettingsItem
+            icon="trash-outline"
+            label={t('deleteAccount.title')}
+            onPress={() => router.push('/profile/delete-account')}
             showChevron={false}
             danger
           />

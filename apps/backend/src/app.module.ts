@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import {
   appConfig,
   databaseConfig,
@@ -50,15 +52,15 @@ import { MonitoringModule } from './common/monitoring/monitoring.module';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get('database.host'),
-        port: config.get('database.port'),
-        username: config.get('database.username'),
-        password: config.get('database.password'),
-        database: config.get('database.name'),
+        type: 'postgres' as const,
+        host: config.get<string>('database.host'),
+        port: config.get<number>('database.port'),
+        username: config.get<string>('database.username'),
+        password: config.get<string>('database.password') || undefined,
+        database: config.get<string>('database.name'),
         entities: [__dirname + '/common/database/entities/*.entity{.ts,.js}'],
-        synchronize: config.get('app.nodeEnv') === 'development',
-        logging: config.get('app.nodeEnv') === 'development',
+        synchronize: config.get<string>('app.nodeEnv') === 'development',
+        logging: false,
       }),
     }),
 
@@ -94,6 +96,12 @@ import { MonitoringModule } from './common/monitoring/monitoring.module';
     ProductsModule,
     InvoicesModule,
     BusinessCentralModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}

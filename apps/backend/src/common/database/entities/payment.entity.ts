@@ -54,7 +54,7 @@ export class Payment extends BaseEntity {
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   status: PaymentStatus;
 
-  @Column({ name: 'gateway_transaction_id', length: 500, nullable: true })
+  @Column({ name: 'gateway_transaction_id', type: 'varchar', length: 500, nullable: true })
   gatewayTransactionId: string | null;
 
   @Column({ name: 'gateway_response', type: 'jsonb', nullable: true })

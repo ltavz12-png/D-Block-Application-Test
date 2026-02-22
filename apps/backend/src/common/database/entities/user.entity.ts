@@ -37,7 +37,7 @@ export class User extends BaseEntity {
   @Column({ length: 255, unique: true })
   email: string;
 
-  @Column({ length: 20, nullable: true, unique: true })
+  @Column({ type: 'varchar', length: 20, nullable: true, unique: true })
   phone: string | null;
 
   @Column({ name: 'password_hash', type: 'text', nullable: true })

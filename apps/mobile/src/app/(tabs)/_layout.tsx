@@ -76,6 +76,16 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="community"
+        options={{
+          title: t('tabs.community'),
+          tabBarIcon: ({ color, size }) => (
+            <TabIcon name="people-outline" color={color} size={size} />
+          ),
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: t('tabs.profile'),

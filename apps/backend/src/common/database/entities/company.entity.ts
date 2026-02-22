@@ -16,22 +16,22 @@ export class Company extends BaseEntityWithCreator {
   @Column({ length: 255 })
   name: string;
 
-  @Column({ name: 'tax_id', length: 50, nullable: true })
+  @Column({ name: 'tax_id', type: 'varchar', length: 50, nullable: true })
   taxId: string | null;
 
-  @Column({ name: 'registration_number', length: 100, nullable: true })
+  @Column({ name: 'registration_number', type: 'varchar', length: 100, nullable: true })
   registrationNumber: string | null;
 
   @Column({ type: 'text', nullable: true })
   address: string | null;
 
-  @Column({ name: 'contact_person_name', length: 255, nullable: true })
+  @Column({ name: 'contact_person_name', type: 'varchar', length: 255, nullable: true })
   contactPersonName: string | null;
 
-  @Column({ name: 'contact_email', length: 255, nullable: true })
+  @Column({ name: 'contact_email', type: 'varchar', length: 255, nullable: true })
   contactEmail: string | null;
 
-  @Column({ name: 'contact_phone', length: 20, nullable: true })
+  @Column({ name: 'contact_phone', type: 'varchar', length: 20, nullable: true })
   contactPhone: string | null;
 
   @Column({ name: 'location_id', type: 'uuid' })
@@ -48,7 +48,7 @@ export class Company extends BaseEntityWithCreator {
   })
   status: CompanyStatus;
 
-  @Column({ name: 'billing_email', length: 255, nullable: true })
+  @Column({ name: 'billing_email', type: 'varchar', length: 255, nullable: true })
   billingEmail: string | null;
 
   @Column({ type: 'jsonb', nullable: true })

@@ -54,10 +54,10 @@ export class Resource extends BaseEntityWithCreator {
   @Column({ type: 'enum', enum: ResourceType, name: 'resource_type' })
   resourceType: ResourceType;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   block: string | null;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   floor: string | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
@@ -135,7 +135,7 @@ export class Resource extends BaseEntityWithCreator {
   @Column({ default: true, name: 'is_bookable' })
   isBookable: boolean;
 
-  @Column({ name: 'salto_lock_id', length: 255, nullable: true })
+  @Column({ name: 'salto_lock_id', type: 'varchar', length: 255, nullable: true })
   saltoLockId: string | null;
 
   @OneToMany(() => Booking, (booking) => booking.resource)

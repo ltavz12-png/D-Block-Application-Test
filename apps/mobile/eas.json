@@ -17,8 +17,7 @@
     "preview": {
       "distribution": "store",
       "ios": {
-        "simulator": false,
-        "appleTeamId": "GC28LY5WZK"
+        "simulator": false
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://dblock-staging.azurewebsites.net/api/v1"
@@ -28,8 +27,7 @@
     "production": {
       "autoIncrement": true,
       "ios": {
-        "simulator": false,
-        "appleTeamId": "GC28LY5WZK"
+        "simulator": false
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://dblock.azurewebsites.net/api/v1"

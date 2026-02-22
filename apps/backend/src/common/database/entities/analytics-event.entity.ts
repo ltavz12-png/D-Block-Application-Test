@@ -32,13 +32,13 @@ export class AnalyticsEvent extends BaseEntity {
   @Column({ name: 'location_id', type: 'uuid', nullable: true })
   locationId: string | null;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   platform: string | null;
 
-  @Column({ name: 'app_version', length: 20, nullable: true })
+  @Column({ name: 'app_version', type: 'varchar', length: 20, nullable: true })
   appVersion: string | null;
 
-  @Column({ name: 'ip_address', length: 45, nullable: true })
+  @Column({ name: 'ip_address', type: 'varchar', length: 45, nullable: true })
   ipAddress: string | null;
 
   @Column({ name: 'user_agent', type: 'text', nullable: true })

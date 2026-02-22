@@ -43,14 +43,14 @@
   "jest": {
     "testEnvironment": "jsdom",
     "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
+      "^.+\\.(ts|tsx)$": ["ts-jest", { "tsconfig": { "jsx": "react-jsx" } }]
     },
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
       "\\.(css|less|scss|sass)$": "identity-obj-proxy",
       "\\.(jpg|jpeg|png|gif|webp|svg)$": "<rootDir>/src/__mocks__/fileMock.js"
     },
-    "setupFilesAfterSetup": ["@testing-library/jest-dom"],
+    "setupFilesAfterEnv": ["<rootDir>/src/test-setup.ts"],
     "testRegex": ".*\\.(test|spec)\\.(ts|tsx)$",
     "collectCoverageFrom": [
       "src/**/*.{ts,tsx}",

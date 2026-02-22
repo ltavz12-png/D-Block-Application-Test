@@ -42,14 +42,14 @@ export class RevenueEntry extends BaseEntity {
   @Column({ name: 'location_id', type: 'uuid', nullable: true })
   locationId: string | null;
 
-  @Column({ name: 'product_type', length: 50, nullable: true })
+  @Column({ name: 'product_type', type: 'varchar', length: 50, nullable: true })
   productType: string | null;
 
   @Index()
   @Column({ name: 'accounting_period_id', type: 'uuid', nullable: true })
   accountingPeriodId: string | null;
 
-  @Column({ name: 'bc_journal_entry_ref', length: 255, nullable: true })
+  @Column({ name: 'bc_journal_entry_ref', type: 'varchar', length: 255, nullable: true })
   bcJournalEntryRef: string | null;
 
   @Column({ name: 'bc_synced', default: false })

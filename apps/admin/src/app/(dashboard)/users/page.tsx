@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
 import { UserRole, UserStatus } from '@/lib/auth';
+import { useUsers } from '@/lib/api-hooks';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -39,141 +40,6 @@ interface UserRow {
   profileImageUrl: string | null;
   createdAt: string;
 }
-
-// ─── Placeholder Data ──────────────────────────────────────────────
-
-const placeholderUsers: UserRow[] = [
-  {
-    key: '1',
-    id: 'usr-001',
-    firstName: 'Giorgi',
-    lastName: 'Beridze',
-    email: 'giorgi@dblock.ge',
-    phone: '+995 555 123 456',
-    role: UserRole.SUPER_ADMIN,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-20T10:30:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-01-15T08:00:00Z',
-  },
-  {
-    key: '2',
-    id: 'usr-002',
-    firstName: 'Nino',
-    lastName: 'Kapanadze',
-    email: 'nino@dblock.ge',
-    phone: '+995 555 234 567',
-    role: UserRole.LOCATION_MANAGER,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-19T16:45:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-02-20T08:00:00Z',
-  },
-  {
-    key: '3',
-    id: 'usr-003',
-    firstName: 'David',
-    lastName: 'Tsiklauri',
-    email: 'david@company.ge',
-    phone: '+995 555 345 678',
-    role: UserRole.COMPANY_ADMIN,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-18T09:15:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-03-10T08:00:00Z',
-  },
-  {
-    key: '4',
-    id: 'usr-004',
-    firstName: 'Ana',
-    lastName: 'Lomidze',
-    email: 'ana.lomidze@gmail.com',
-    phone: '+995 555 456 789',
-    role: UserRole.MEMBER,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-20T08:00:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-04-05T08:00:00Z',
-  },
-  {
-    key: '5',
-    id: 'usr-005',
-    firstName: 'Lasha',
-    lastName: 'Gogichaishvili',
-    email: 'lasha@example.com',
-    phone: null,
-    role: UserRole.MEMBER,
-    status: UserStatus.PENDING_VERIFICATION,
-    lastLoginAt: null,
-    profileImageUrl: null,
-    createdAt: '2024-12-19T14:00:00Z',
-  },
-  {
-    key: '6',
-    id: 'usr-006',
-    firstName: 'Tamari',
-    lastName: 'Javakhishvili',
-    email: 'tamari@dblock.ge',
-    phone: '+995 555 567 890',
-    role: UserRole.FINANCE_ADMIN,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-20T11:00:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-01-20T08:00:00Z',
-  },
-  {
-    key: '7',
-    id: 'usr-007',
-    firstName: 'Irakli',
-    lastName: 'Mgeladze',
-    email: 'irakli@dblock.ge',
-    phone: '+995 555 678 901',
-    role: UserRole.RECEPTION_STAFF,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-20T07:55:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-05-15T08:00:00Z',
-  },
-  {
-    key: '8',
-    id: 'usr-008',
-    firstName: 'Mariam',
-    lastName: 'Kvaratskhelia',
-    email: 'mariam@example.com',
-    phone: '+995 555 789 012',
-    role: UserRole.MEMBER,
-    status: UserStatus.SUSPENDED,
-    lastLoginAt: '2024-11-15T10:00:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-06-01T08:00:00Z',
-  },
-  {
-    key: '9',
-    id: 'usr-009',
-    firstName: 'Salome',
-    lastName: 'Kipiani',
-    email: 'salome@dblock.ge',
-    phone: '+995 555 890 123',
-    role: UserRole.MARKETING_ADMIN,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-20T09:30:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-02-01T08:00:00Z',
-  },
-  {
-    key: '10',
-    id: 'usr-010',
-    firstName: 'Nikoloz',
-    lastName: 'Basilashvili',
-    email: 'niko@company2.ge',
-    phone: '+995 555 901 234',
-    role: UserRole.COMPANY_EMPLOYEE,
-    status: UserStatus.ACTIVE,
-    lastLoginAt: '2024-12-19T17:00:00Z',
-    profileImageUrl: null,
-    createdAt: '2024-07-10T08:00:00Z',
-  },
-];
 
 // ─── Status tag colors ─────────────────────────────────────────────
 
@@ -205,21 +71,32 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(
     undefined,
   );
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Filter users based on search and filters
-  const filteredUsers = placeholderUsers.filter((user) => {
-    const matchesSearch =
-      !searchText ||
-      `${user.firstName} ${user.lastName}`
-        .toLowerCase()
-        .includes(searchText.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchText.toLowerCase());
-
-    const matchesRole = !roleFilter || user.role === roleFilter;
-    const matchesStatus = !statusFilter || user.status === statusFilter;
-
-    return matchesSearch && matchesRole && matchesStatus;
+  const { data, isLoading } = useUsers({
+    search: searchText || undefined,
+    role: roleFilter as UserRole | undefined,
+    status: statusFilter as UserStatus | undefined,
+    page,
+    limit: pageSize,
   });
+
+  const users: UserRow[] = (data?.data ?? []).map((u) => ({
+    key: u.id,
+    id: u.id,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: u.email,
+    phone: u.phone,
+    role: u.role as UserRole,
+    status: u.status as UserStatus,
+    lastLoginAt: u.lastLoginAt,
+    profileImageUrl: u.profileImageUrl,
+    createdAt: u.createdAt,
+  }));
+
+  const total = data?.total ?? 0;
 
   const columns: ColumnsType<UserRow> = [
     {
@@ -332,14 +209,20 @@ export default function UsersPage() {
           placeholder={t('users.searchPlaceholder')}
           prefix={<SearchOutlined />}
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setPage(1);
+          }}
           style={{ width: 300 }}
           allowClear
         />
         <Select
           placeholder={t('users.role')}
           value={roleFilter}
-          onChange={setRoleFilter}
+          onChange={(v) => {
+            setRoleFilter(v);
+            setPage(1);
+          }}
           allowClear
           style={{ width: 180 }}
           options={Object.values(UserRole).map((role) => ({
@@ -350,7 +233,10 @@ export default function UsersPage() {
         <Select
           placeholder={t('users.status')}
           value={statusFilter}
-          onChange={setStatusFilter}
+          onChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
           allowClear
           style={{ width: 180 }}
           options={Object.values(UserStatus).map((status) => ({
@@ -363,12 +249,19 @@ export default function UsersPage() {
       {/* ─── Users Table ────────────────────────────────────────── */}
       <Table
         columns={columns}
-        dataSource={filteredUsers}
+        dataSource={users}
+        loading={isLoading}
         pagination={{
-          pageSize: 10,
+          current: page,
+          pageSize,
+          total,
           showSizeChanger: true,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} of ${total} ${t('users.title').toLowerCase()}`,
+          onChange: (p, ps) => {
+            setPage(p);
+            setPageSize(ps);
+          },
+          showTotal: (tot, range) =>
+            `${range[0]}-${range[1]} of ${tot} ${t('users.title').toLowerCase()}`,
         }}
         scroll={{ x: 1100 }}
         size="middle"

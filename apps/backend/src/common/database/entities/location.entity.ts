@@ -13,7 +13,7 @@ export class Location extends BaseEntityWithCreator {
   @Column({ type: 'text', nullable: true })
   address: string | null;
 
-  @Column({ length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   timezone: string | null;
 
   @Column({ length: 10, default: 'GEL' })
@@ -25,10 +25,10 @@ export class Location extends BaseEntityWithCreator {
   @Column({ type: 'decimal', precision: 10, scale: 6, nullable: true })
   longitude: number | null;
 
-  @Column({ length: 20, nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   phone: string | null;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   email: string | null;
 
   @Column({ type: 'jsonb', nullable: true, name: 'operating_hours' })

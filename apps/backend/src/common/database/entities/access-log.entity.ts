@@ -29,7 +29,7 @@ export class AccessLog {
   @Column({ name: 'resource_id', type: 'uuid', nullable: true })
   resourceId: string | null;
 
-  @Column({ name: 'door_id', length: 255, nullable: true })
+  @Column({ name: 'door_id', type: 'varchar', length: 255, nullable: true })
   doorId: string | null;
 
   @Column({ type: 'enum', enum: AccessMethod })
@@ -48,6 +48,6 @@ export class AccessLog {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Column({ name: 'salto_event_id', length: 255, nullable: true })
+  @Column({ name: 'salto_event_id', type: 'varchar', length: 255, nullable: true })
   saltoEventId: string | null;
 }

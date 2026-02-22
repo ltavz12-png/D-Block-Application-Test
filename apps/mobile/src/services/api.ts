@@ -1,8 +1,33 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'dblock_access_token';
 const REFRESH_TOKEN_KEY = 'dblock_refresh_token';
+
+// Web-compatible storage helpers (SecureStore is native-only)
+const storage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') {
+      return localStorage.getItem(key);
+    }
+    return SecureStore.getItemAsync(key);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      localStorage.setItem(key, value);
+      return;
+    }
+    return SecureStore.setItemAsync(key, value);
+  },
+  deleteItem: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem(key);
+      return;
+    }
+    return SecureStore.deleteItemAsync(key);
+  },
+};
 
 const BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
@@ -22,8 +47,8 @@ export async function getTokens(): Promise<{
   refreshToken: string | null;
 }> {
   const [accessToken, refreshToken] = await Promise.all([
-    SecureStore.getItemAsync(TOKEN_KEY),
-    SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
+    storage.getItem(TOKEN_KEY),
+    storage.getItem(REFRESH_TOKEN_KEY),
   ]);
   return { accessToken, refreshToken };
 }
@@ -33,15 +58,15 @@ export async function setTokens(
   refreshToken: string,
 ): Promise<void> {
   await Promise.all([
-    SecureStore.setItemAsync(TOKEN_KEY, accessToken),
-    SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken),
+    storage.setItem(TOKEN_KEY, accessToken),
+    storage.setItem(REFRESH_TOKEN_KEY, refreshToken),
   ]);
 }
 
 export async function clearTokens(): Promise<void> {
   await Promise.all([
-    SecureStore.deleteItemAsync(TOKEN_KEY),
-    SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
+    storage.deleteItem(TOKEN_KEY),
+    storage.deleteItem(REFRESH_TOKEN_KEY),
   ]);
 }
 
@@ -111,8 +136,8 @@ api.interceptors.response.use(
           refreshToken,
         });
 
-        const newAccessToken: string = data.accessToken;
-        const newRefreshToken: string = data.refreshToken;
+        const newAccessToken: string = data.tokens.accessToken;
+        const newRefreshToken: string = data.tokens.refreshToken;
 
         await setTokens(newAccessToken, newRefreshToken);
         processQueue(null, newAccessToken);

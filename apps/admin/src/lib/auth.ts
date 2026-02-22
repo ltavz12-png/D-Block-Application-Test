@@ -58,6 +58,15 @@ export interface LoginResponse {
   refreshToken: string;
 }
 
+interface RawLoginResponse {
+  user: User;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  };
+}
+
 export interface RefreshRequest {
   refreshToken: string;
 }
@@ -70,8 +79,13 @@ export interface LogoutRequest {
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const response = await api.post<LoginResponse>('/auth/login', data);
-    return response.data;
+    const response = await api.post<RawLoginResponse>('/auth/login', data);
+    const raw = response.data;
+    return {
+      user: raw.user,
+      accessToken: raw.tokens.accessToken,
+      refreshToken: raw.tokens.refreshToken,
+    };
   },
 
   logout: async (data: LogoutRequest): Promise<void> => {

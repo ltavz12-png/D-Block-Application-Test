@@ -29,7 +29,7 @@ export class Product extends BaseEntityWithCreator {
   @Column({ length: 255 })
   name: string;
 
-  @Column({ name: 'name_ka', length: 255, nullable: true })
+  @Column({ name: 'name_ka', type: 'varchar', length: 255, nullable: true })
   nameKa: string | null;
 
   @Column({ type: 'text', nullable: true })

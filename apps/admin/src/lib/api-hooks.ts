@@ -14,6 +14,8 @@ import type {
   Visitor,
   AccessKey,
   AccessLog,
+  AdminProduct,
+  AdminRateCode,
   PaginatedResponse,
   BookingStats,
   PaymentSummary,
@@ -31,14 +33,48 @@ import type {
   RevenueEntriesQueryParams,
   RevenueSummaryQueryParams,
   ResourcesQueryParams,
+  ProductsQueryParams,
   VisitorsQueryParams,
   AccessKeysQueryParams,
   AccessLogsQueryParams,
 } from './types';
 
+// ─── Dashboard Types ────────────────────────────────────────────────
+
+export interface DashboardStats {
+  totalUsers: number;
+  totalBookings: number;
+  activeBookings: number;
+  todayBookings: number;
+  totalResources: number;
+  totalLocations: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+}
+
+export interface DashboardRecentBooking {
+  id: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  user: { id: string; firstName: string; lastName: string; email: string };
+  resource: { id: string; name: string; resourceType: string; location?: { id: string; name: string } };
+}
+
+export interface BookingsByLocation {
+  locationId: string;
+  locationName: string;
+  count: number;
+}
+
 // ─── Query Key Factory ──────────────────────────────────────────────
 
 export const queryKeys = {
+  dashboardStats: () => ['dashboard', 'stats'] as const,
+  dashboardRecentBookings: (limit?: number) => ['dashboard', 'recent-bookings', limit] as const,
+  dashboardBookingsByLocation: () => ['dashboard', 'bookings-by-location'] as const,
   users: (params?: UsersQueryParams) => ['users', params] as const,
   user: (id: string) => ['users', id] as const,
   bookings: (params?: BookingsQueryParams) => ['bookings', params] as const,
@@ -61,7 +97,48 @@ export const queryKeys = {
   accessKeys: (params?: AccessKeysQueryParams) => ['access-keys', params] as const,
   accessLogs: (params?: AccessLogsQueryParams) => ['access-logs', params] as const,
   accessStats: (locationId: string) => ['access', 'stats', locationId] as const,
+  products: (params?: ProductsQueryParams) => ['products', params] as const,
 };
+
+// ─── Dashboard Hooks ────────────────────────────────────────────────
+
+export function useDashboardStats() {
+  return useQuery({
+    queryKey: queryKeys.dashboardStats(),
+    queryFn: async () => {
+      const { data } = await api.get<DashboardStats>('/admin/dashboard/stats');
+      return data;
+    },
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useDashboardRecentBookings(limit = 5) {
+  return useQuery({
+    queryKey: queryKeys.dashboardRecentBookings(limit),
+    queryFn: async () => {
+      const { data } = await api.get<DashboardRecentBooking[]>(
+        '/admin/dashboard/recent-bookings',
+        { params: { limit } },
+      );
+      return data;
+    },
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useDashboardBookingsByLocation() {
+  return useQuery({
+    queryKey: queryKeys.dashboardBookingsByLocation(),
+    queryFn: async () => {
+      const { data } = await api.get<BookingsByLocation[]>(
+        '/admin/dashboard/bookings-by-location',
+      );
+      return data;
+    },
+    staleTime: 60 * 1000,
+  });
+}
 
 // ─── User Hooks ─────────────────────────────────────────────────────
 
@@ -144,6 +221,44 @@ export function useLocations() {
       return data;
     },
     staleTime: 5 * 60 * 1000, // Locations rarely change
+  });
+}
+
+export function useCreateLocation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<Location>) => {
+      const { data } = await api.post<Location>('/locations', payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+    },
+  });
+}
+
+export function useUpdateLocation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string } & Partial<Location>) => {
+      const { data } = await api.patch<Location>(`/locations/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+    },
+  });
+}
+
+export function useDeleteLocation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/locations/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+    },
   });
 }
 
@@ -462,5 +577,55 @@ export function useAccessStats(locationId: string) {
       return data;
     },
     enabled: !!locationId,
+  });
+}
+
+// ─── Product Hooks ─────────────────────────────────────────────────
+
+export function useAdminProducts(params?: ProductsQueryParams) {
+  return useQuery({
+    queryKey: queryKeys.products(params),
+    queryFn: async () => {
+      const { data } = await api.get<PaginatedResponse<AdminProduct>>('/products/admin', { params });
+      return data;
+    },
+  });
+}
+
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/products/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useCreateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: Partial<AdminProduct> & { rateCodes?: Partial<AdminRateCode>[] }) => {
+      const { data } = await api.post<AdminProduct>('/products', payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+}
+
+export function useUpdateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string } & Partial<AdminProduct>) => {
+      const { data } = await api.patch<AdminProduct>(`/products/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
   });
 }

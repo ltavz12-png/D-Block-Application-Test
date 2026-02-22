@@ -74,8 +74,9 @@ api.interceptors.response.use(
             refreshToken,
           });
 
-          const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-            response.data;
+          const { tokens } = response.data;
+          const newAccessToken = tokens.accessToken;
+          const newRefreshToken = tokens.refreshToken;
           TokenStorage.setTokens(newAccessToken, newRefreshToken);
 
           if (originalRequest.headers) {

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Switch,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -15,11 +17,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-
-type Language = 'en' | 'ka';
+import { Colors, Spacing } from '@/constants/theme';
+import CountrySearchSheet from '@/components/CountrySearchSheet';
 
 export default function RegisterScreen() {
   const { t, i18n } = useTranslation();
@@ -28,22 +27,29 @@ export default function RegisterScreen() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>(
-    (i18n.language as Language) || 'en',
-  );
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  async function handleRegister() {
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      Alert.alert(t('common.error'), 'Please fill in all required fields');
+  const [countryDial, setCountryDial] = useState('+995');
+  const [countrySheetVisible, setCountrySheetVisible] = useState(false);
+  const [newsletter, setNewsletter] = useState(true);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+
+  async function handleContinue() {
+    if (!firstName.trim() || !lastName.trim()) {
+      Alert.alert(t('common.error'), t('auth.fillAllFields'));
+      return;
+    }
+
+    if (!phone.trim()) {
+      Alert.alert(t('common.error'), t('auth.phoneRequired'));
       return;
     }
 
     if (!agreedToTerms) {
-      Alert.alert(t('common.error'), 'Please agree to the terms and conditions');
+      Alert.alert(t('common.error'), t('auth.acceptTerms'));
       return;
     }
 
@@ -51,23 +57,18 @@ export default function RegisterScreen() {
       await register({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        email: email.trim(),
-        password,
-        phone: phone.trim() || undefined,
-        preferredLanguage: selectedLanguage,
+        email: email.trim() || `${phone.trim()}@placeholder.dblock`,
+        password: password || `${countryDial}${phone.trim()}`,
+        phone: `${countryDial}${phone.trim()}`,
+        preferredLanguage: i18n.language as 'en' | 'ka',
       });
     } catch {
-      Alert.alert(t('common.error'), 'Registration failed. Please try again.');
+      Alert.alert(t('common.error'), t('auth.registerFailed'));
     }
   }
 
-  function handleLogin() {
+  function handleClose() {
     router.back();
-  }
-
-  function handleLanguageSelect(lang: Language) {
-    setSelectedLanguage(lang);
-    i18n.changeLanguage(lang);
   }
 
   return (
@@ -81,147 +82,193 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleLogin} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={Colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.title}>{t('auth.registerTitle')}</Text>
+          {/* Close Button */}
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color="#1E1E1E" />
+          </TouchableOpacity>
+
+          {/* Title */}
+          <Text style={styles.title}>{t('auth.signUpTitle')}</Text>
+
+          {/* Personal Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>{t('auth.personalInfo')}</Text>
+
+            <View style={styles.inputField}>
+              <Text style={styles.inputLabel}>{t('auth.firstName').toUpperCase()}</Text>
+              <TextInput
+                style={styles.inputValue}
+                placeholder={t('auth.firstName')}
+                placeholderTextColor="#C7C7CC"
+                value={firstName}
+                onChangeText={setFirstName}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View style={styles.inputField}>
+              <Text style={styles.inputLabel}>{t('auth.lastName').toUpperCase()}</Text>
+              <TextInput
+                style={styles.inputValue}
+                placeholder={t('auth.lastName')}
+                placeholderTextColor="#C7C7CC"
+                value={lastName}
+                onChangeText={setLastName}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <Text style={styles.helperText}>{t('auth.nameHelper')}</Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            <Input
-              label={t('auth.firstName')}
-              placeholder={t('auth.firstName')}
-              value={firstName}
-              onChangeText={setFirstName}
-              autoCapitalize="words"
-              leftIcon="person-outline"
-            />
+          {/* Contact Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>{t('auth.contactInfo')}</Text>
 
-            <Input
-              label={t('auth.lastName')}
-              placeholder={t('auth.lastName')}
-              value={lastName}
-              onChangeText={setLastName}
-              autoCapitalize="words"
-              leftIcon="person-outline"
-            />
+            <View style={styles.phoneRow}>
+              <TouchableOpacity
+                style={styles.countryCodeButton}
+                onPress={() => setCountrySheetVisible(true)}
+              >
+                <Text style={styles.countryCodeText}>{countryDial}</Text>
+                <Ionicons name="chevron-down" size={14} color="#8E8E93" />
+              </TouchableOpacity>
 
-            <Input
-              label={t('auth.email')}
-              placeholder={t('auth.email')}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              leftIcon="mail-outline"
-            />
-
-            <Input
-              label={`${t('auth.phone')} (${t('common.cancel').toLowerCase()})`}
-              placeholder={t('auth.phone')}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              leftIcon="call-outline"
-            />
-
-            <Input
-              label={t('auth.password')}
-              placeholder={t('auth.password')}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              leftIcon="lock-closed-outline"
-            />
-
-            {/* Language Selector */}
-            <View style={styles.languageSection}>
-              <Text style={styles.languageLabel}>{t('profile.language')}</Text>
-              <View style={styles.languageOptions}>
-                <TouchableOpacity
-                  style={[
-                    styles.languageOption,
-                    selectedLanguage === 'en' && styles.languageOptionActive,
-                  ]}
-                  onPress={() => handleLanguageSelect('en')}
-                >
-                  <Text
-                    style={[
-                      styles.languageOptionText,
-                      selectedLanguage === 'en' &&
-                        styles.languageOptionTextActive,
-                    ]}
-                  >
-                    EN
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.languageOption,
-                    selectedLanguage === 'ka' && styles.languageOptionActive,
-                  ]}
-                  onPress={() => handleLanguageSelect('ka')}
-                >
-                  <Text
-                    style={[
-                      styles.languageOptionText,
-                      selectedLanguage === 'ka' &&
-                        styles.languageOptionTextActive,
-                    ]}
-                  >
-                    KA
-                  </Text>
-                </TouchableOpacity>
+              <View style={[styles.inputField, { flex: 1 }]}>
+                <Text style={styles.inputLabel}>{t('auth.mobileNumber').toUpperCase()}</Text>
+                <TextInput
+                  style={styles.inputValue}
+                  placeholder="(555) 315 631"
+                  placeholderTextColor="#C7C7CC"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
               </View>
             </View>
 
-            {/* Terms and Conditions */}
-            <TouchableOpacity
-              style={styles.termsRow}
-              onPress={() => setAgreedToTerms(!agreedToTerms)}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  agreedToTerms && styles.checkboxChecked,
-                ]}
-              >
-                {agreedToTerms && (
-                  <Ionicons name="checkmark" size={16} color={Colors.white} />
-                )}
-              </View>
-              <Text style={styles.termsText}>
-                {t('auth.termsAndConditions')}
-              </Text>
-            </TouchableOpacity>
+            <Text style={styles.helperText}>{t('auth.phoneHelper')}</Text>
+          </View>
 
-            <Button
-              title={t('auth.register')}
-              onPress={handleRegister}
-              loading={isLoading}
-              variant="primary"
-              size="lg"
-              disabled={!agreedToTerms}
+          {/* Email (optional — backend requires it) */}
+          <View style={styles.section}>
+            <View style={styles.inputField}>
+              <Text style={styles.inputLabel}>{t('auth.email').toUpperCase()}</Text>
+              <TextInput
+                style={styles.inputValue}
+                placeholder="email@example.com"
+                placeholderTextColor="#C7C7CC"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+          </View>
+
+          {/* Password */}
+          <View style={styles.section}>
+            <View style={styles.inputField}>
+              <Text style={styles.inputLabel}>{t('auth.password').toUpperCase()}</Text>
+              <TextInput
+                style={styles.inputValue}
+                placeholder={t('auth.password')}
+                placeholderTextColor="#C7C7CC"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+          </View>
+
+          {/* Newsletter Card */}
+          <View style={styles.newsletterCard}>
+            <View style={styles.newsletterContent}>
+              <Text style={styles.newsletterTitle}>{t('auth.newsletterTitle')}</Text>
+              <Text style={styles.newsletterBody}>{t('auth.newsletterBody')}</Text>
+              <TouchableOpacity>
+                <Text style={styles.readMoreLink}>{t('auth.readMore')}</Text>
+              </TouchableOpacity>
+            </View>
+            <Switch
+              value={newsletter}
+              onValueChange={setNewsletter}
+              trackColor={{ false: '#E5E5EA', true: '#007AFF' }}
+              thumbColor="#FFFFFF"
             />
           </View>
 
-          {/* Login Link */}
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>
-              {t('auth.alreadyHaveAccount')}{' '}
-            </Text>
-            <TouchableOpacity onPress={handleLogin}>
-              <Text style={styles.loginLink}>{t('auth.login')}</Text>
+          {/* Consents */}
+          <View style={styles.consentsSection}>
+            <TouchableOpacity
+              style={styles.consentRow}
+              onPress={() => setAgreedToTerms(!agreedToTerms)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                {agreedToTerms && (
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                )}
+              </View>
+              <Text style={styles.consentText}>
+                {t('auth.consentTerms')}{' '}
+                <Text
+                  style={styles.consentLink}
+                  onPress={() => router.push('/legal/terms')}
+                >
+                  {t('legal.termsOfUse')}
+                </Text>
+                {' & '}
+                <Text
+                  style={styles.consentLink}
+                  onPress={() => router.push('/legal/privacy')}
+                >
+                  {t('legal.privacyPolicy')}
+                </Text>
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.consentRow}
+              onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.checkbox, agreedToPrivacy && styles.checkboxChecked]}>
+                {agreedToPrivacy && (
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                )}
+              </View>
+              <Text style={styles.consentText}>{t('auth.consentMarketing')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {/* Footer — Continue button */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[
+              styles.continueButton,
+              (!agreedToTerms || isLoading) && styles.continueButtonDisabled,
+            ]}
+            onPress={handleContinue}
+            disabled={!agreedToTerms || isLoading}
+          >
+            <Text style={styles.continueButtonText}>
+              {isLoading ? t('common.loading') : t('common.next')}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
+
+      <CountrySearchSheet
+        visible={countrySheetVisible}
+        onClose={() => setCountrySheetVisible(false)}
+        onSelect={(country) => {
+          setCountryDial(country.dial);
+          setCountrySheetVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -229,99 +276,175 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#FFFFFF',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingHorizontal: 16,
+    paddingBottom: 120,
   },
-  header: {
-    flexDirection: 'row',
+  closeButton: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  backButton: {
-    padding: Spacing.xs,
-    marginRight: Spacing.md,
+    justifyContent: 'center',
+    marginTop: 8,
   },
   title: {
-    ...Typography.h2,
-    color: Colors.text,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1E1E1E',
+    marginTop: 24,
+    marginBottom: 32,
   },
-  form: {
-    gap: Spacing.md,
+  section: {
+    marginBottom: 24,
   },
-  languageSection: {
-    gap: Spacing.sm,
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E1E1E',
+    marginBottom: 12,
   },
-  languageLabel: {
-    ...Typography.bodyMedium,
-    color: Colors.text,
-  },
-  languageOptions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  languageOption: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+  inputField: {
+    height: 52,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
+    borderColor: '#E5E5EA',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  languageOptionActive: {
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.secondary,
+  inputLabel: {
+    fontSize: 10,
+    fontWeight: '400',
+    color: '#8E8E93',
+    letterSpacing: 0.5,
   },
-  languageOptionText: {
-    ...Typography.bodyMedium,
-    color: Colors.text,
+  inputValue: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#1E1E1E',
+    paddingVertical: 0,
+    marginTop: 2,
   },
-  languageOptionTextActive: {
-    color: Colors.white,
+  helperText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#8E8E93',
+    marginTop: 4,
   },
-  termsRow: {
+  phoneRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  countryCodeButton: {
+    width: 100,
+    height: 52,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    justifyContent: 'center',
+    gap: 4,
+  },
+  countryCodeText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#1E1E1E',
+  },
+  newsletterCard: {
+    backgroundColor: '#F7F7F7',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  newsletterContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  newsletterTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1E1E1E',
+    marginBottom: 4,
+  },
+  newsletterBody: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#4B4F55',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  readMoreLink: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+  consentsSection: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 2,
-    borderColor: Colors.border,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#C7C7CC',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
   },
   checkboxChecked: {
-    backgroundColor: Colors.secondary,
-    borderColor: Colors.secondary,
+    backgroundColor: '#1E1E1E',
+    borderColor: '#1E1E1E',
   },
-  termsText: {
-    ...Typography.bodyRegular,
-    color: Colors.text,
+  consentText: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#1E1E1E',
     flex: 1,
+    lineHeight: 18,
   },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  consentLink: {
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingBottom: Spacing.xl,
+    paddingTop: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  continueButton: {
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1E1E1E',
     alignItems: 'center',
-    marginTop: Spacing.lg,
+    justifyContent: 'center',
   },
-  loginText: {
-    ...Typography.bodyRegular,
-    color: Colors.textSecondary,
+  continueButtonDisabled: {
+    opacity: 0.4,
   },
-  loginLink: {
-    ...Typography.bodyMedium,
-    color: Colors.secondary,
+  continueButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

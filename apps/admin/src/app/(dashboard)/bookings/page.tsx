@@ -10,17 +10,25 @@ import {
   DatePicker,
   Select,
   Tooltip,
+  Modal,
+  message,
 } from 'antd';
 import {
   PlusOutlined,
   EyeOutlined,
-  EditOutlined,
+  CheckCircleOutlined,
   CloseCircleOutlined,
   CalendarOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import PageHeader from '@/components/PageHeader';
+import {
+  useBookings,
+  useConfirmBooking,
+  useCancelBooking,
+} from '@/lib/api-hooks';
+import { useLocations } from '@/lib/api-hooks';
 
 const { RangePicker } = DatePicker;
 
@@ -48,141 +56,6 @@ interface BookingRow {
   currency: string;
 }
 
-// ─── Placeholder Data ──────────────────────────────────────────────
-
-const placeholderBookings: BookingRow[] = [
-  {
-    key: '1',
-    id: 'BK-2024-001',
-    user: 'Giorgi Beridze',
-    resource: 'Meeting Room A',
-    resourceType: 'meeting_room',
-    location: 'Vera',
-    startTime: '2024-12-20T10:00:00Z',
-    endTime: '2024-12-20T12:00:00Z',
-    status: 'confirmed',
-    totalAmount: '120',
-    currency: 'GEL',
-  },
-  {
-    key: '2',
-    id: 'BK-2024-002',
-    user: 'Nino Kapanadze',
-    resource: 'Hot Desk #12',
-    resourceType: 'hot_desk',
-    location: 'Vake',
-    startTime: '2024-12-20T09:00:00Z',
-    endTime: '2024-12-20T18:00:00Z',
-    status: 'checked_in',
-    totalAmount: '45',
-    currency: 'GEL',
-  },
-  {
-    key: '3',
-    id: 'BK-2024-003',
-    user: 'David Tsiklauri',
-    resource: 'Office Box 3',
-    resourceType: 'box',
-    location: 'Saburtalo',
-    startTime: '2024-12-20T14:00:00Z',
-    endTime: '2024-12-20T18:00:00Z',
-    status: 'held',
-    totalAmount: '280',
-    currency: 'GEL',
-  },
-  {
-    key: '4',
-    id: 'BK-2024-004',
-    user: 'Ana Lomidze',
-    resource: 'Phone Booth 2',
-    resourceType: 'phone_booth',
-    location: 'Vera',
-    startTime: '2024-12-20T11:30:00Z',
-    endTime: '2024-12-20T12:30:00Z',
-    status: 'confirmed',
-    totalAmount: '30',
-    currency: 'GEL',
-  },
-  {
-    key: '5',
-    id: 'BK-2024-005',
-    user: 'Lasha Gogichaishvili',
-    resource: 'Event Space',
-    resourceType: 'event_space',
-    location: 'Old Tbilisi',
-    startTime: '2024-12-21T18:00:00Z',
-    endTime: '2024-12-21T22:00:00Z',
-    status: 'confirmed',
-    totalAmount: '850',
-    currency: 'GEL',
-  },
-  {
-    key: '6',
-    id: 'BK-2024-006',
-    user: 'Tamari Javakhishvili',
-    resource: 'Fixed Desk #5',
-    resourceType: 'fixed_desk',
-    location: 'Vera',
-    startTime: '2024-12-19T09:00:00Z',
-    endTime: '2024-12-19T18:00:00Z',
-    status: 'completed',
-    totalAmount: '55',
-    currency: 'GEL',
-  },
-  {
-    key: '7',
-    id: 'BK-2024-007',
-    user: 'Irakli Mgeladze',
-    resource: 'Meeting Room B',
-    resourceType: 'meeting_room',
-    location: 'Vake',
-    startTime: '2024-12-18T15:00:00Z',
-    endTime: '2024-12-18T16:00:00Z',
-    status: 'cancelled',
-    totalAmount: '60',
-    currency: 'GEL',
-  },
-  {
-    key: '8',
-    id: 'BK-2024-008',
-    user: 'Mariam Kvaratskhelia',
-    resource: 'Hot Desk #8',
-    resourceType: 'hot_desk',
-    location: 'Saburtalo',
-    startTime: '2024-12-17T09:00:00Z',
-    endTime: '2024-12-17T18:00:00Z',
-    status: 'no_show',
-    totalAmount: '45',
-    currency: 'GEL',
-  },
-  {
-    key: '9',
-    id: 'BK-2024-009',
-    user: 'Salome Kipiani',
-    resource: 'Parking Spot P3',
-    resourceType: 'parking',
-    location: 'Vera',
-    startTime: '2024-12-22T08:00:00Z',
-    endTime: '2024-12-22T20:00:00Z',
-    status: 'confirmed',
-    totalAmount: '15',
-    currency: 'GEL',
-  },
-  {
-    key: '10',
-    id: 'BK-2024-010',
-    user: 'Nikoloz Basilashvili',
-    resource: 'Locker L12',
-    resourceType: 'locker',
-    location: 'Vake',
-    startTime: '2024-12-01T00:00:00Z',
-    endTime: '2024-12-31T23:59:00Z',
-    status: 'confirmed',
-    totalAmount: '40',
-    currency: 'GEL',
-  },
-];
-
 // ─── Status Colors ─────────────────────────────────────────────────
 
 const statusColors: Record<BookingStatus, string> = {
@@ -200,43 +73,83 @@ export default function BookingsPage() {
   const [locationFilter, setLocationFilter] = useState<string | undefined>(
     undefined,
   );
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Filter bookings based on active tab
-  const filteredBookings = placeholderBookings.filter((booking) => {
-    const now = new Date();
-    const startTime = new Date(booking.startTime);
+  const statusForTab =
+    activeTab === 'cancelled'
+      ? 'cancelled'
+      : activeTab === 'completed'
+        ? 'completed'
+        : undefined;
 
-    let matchesTab = true;
-    switch (activeTab) {
-      case 'upcoming':
-        matchesTab =
-          startTime > now &&
-          booking.status !== 'cancelled' &&
-          booking.status !== 'completed';
-        break;
-      case 'past':
-        matchesTab =
-          booking.status === 'completed' || booking.status === 'no_show';
-        break;
-      case 'cancelled':
-        matchesTab = booking.status === 'cancelled';
-        break;
-      default:
-        matchesTab = true;
-    }
-
-    const matchesLocation =
-      !locationFilter || booking.location === locationFilter;
-
-    return matchesTab && matchesLocation;
+  const { data, isLoading } = useBookings({
+    location: locationFilter,
+    status: statusForTab as any,
+    page,
+    limit: pageSize,
   });
+
+  const { data: locationsData } = useLocations();
+
+  const confirmBooking = useConfirmBooking();
+  const cancelBooking = useCancelBooking();
+
+  const bookings: BookingRow[] = (data?.data ?? []).map((b) => ({
+    key: b.id,
+    id: b.id.substring(0, 8),
+    user: b.user
+      ? `${b.user.firstName} ${b.user.lastName}`
+      : '-',
+    resource: b.resource?.name ?? '-',
+    resourceType: b.resource?.resourceType ?? '-',
+    location: b.resource?.location?.name ?? '-',
+    startTime: b.startTime,
+    endTime: b.endTime,
+    status: b.status as BookingStatus,
+    totalAmount: String(b.totalAmount),
+    currency: b.currency,
+  }));
+
+  const total = data?.total ?? 0;
+
+  function handleConfirm(id: string) {
+    Modal.confirm({
+      title: t('bookings.confirmBooking'),
+      content: t('bookings.confirmMessage', 'Are you sure you want to confirm this booking?'),
+      onOk: async () => {
+        try {
+          await confirmBooking.mutateAsync(id);
+          message.success(t('common.success'));
+        } catch {
+          message.error(t('common.error'));
+        }
+      },
+    });
+  }
+
+  function handleCancel(id: string) {
+    Modal.confirm({
+      title: t('common.cancel'),
+      content: t('bookings.cancelMessage', 'Are you sure you want to cancel this booking?'),
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await cancelBooking.mutateAsync({ id });
+          message.success(t('common.success'));
+        } catch {
+          message.error(t('common.error'));
+        }
+      },
+    });
+  }
 
   const columns: ColumnsType<BookingRow> = [
     {
       title: t('bookings.id'),
       dataIndex: 'id',
       key: 'id',
-      width: 140,
+      width: 100,
       render: (id: string) => (
         <span style={{ fontWeight: 500, fontFamily: 'monospace' }}>{id}</span>
       ),
@@ -310,23 +223,31 @@ export default function BookingsPage() {
     {
       title: t('common.actions'),
       key: 'actions',
-      width: 120,
+      width: 140,
       align: 'center',
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title={t('common.edit')}>
+          <Tooltip title={t('common.view')}>
             <Button type="text" size="small" icon={<EyeOutlined />} />
           </Tooltip>
-          <Tooltip title={t('common.edit')}>
-            <Button type="text" size="small" icon={<EditOutlined />} />
-          </Tooltip>
-          {record.status !== 'cancelled' && record.status !== 'completed' && (
+          {record.status === 'held' && (
+            <Tooltip title={t('bookings.confirm')}>
+              <Button
+                type="text"
+                size="small"
+                icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                onClick={() => handleConfirm(record.key)}
+              />
+            </Tooltip>
+          )}
+          {record.status !== 'cancelled' && record.status !== 'completed' && record.status !== 'no_show' && (
             <Tooltip title={t('common.cancel')}>
               <Button
                 type="text"
                 size="small"
                 danger
                 icon={<CloseCircleOutlined />}
+                onClick={() => handleCancel(record.key)}
               />
             </Tooltip>
           )}
@@ -336,20 +257,15 @@ export default function BookingsPage() {
   ];
 
   const tabItems = [
-    { key: 'all', label: `${t('common.all')} (${placeholderBookings.length})` },
-    {
-      key: 'upcoming',
-      label: `${t('bookings.upcoming')} (${placeholderBookings.filter((b) => new Date(b.startTime) > new Date() && b.status !== 'cancelled' && b.status !== 'completed').length})`,
-    },
-    {
-      key: 'past',
-      label: `${t('bookings.past')} (${placeholderBookings.filter((b) => b.status === 'completed' || b.status === 'no_show').length})`,
-    },
-    {
-      key: 'cancelled',
-      label: `${t('bookings.cancelled')} (${placeholderBookings.filter((b) => b.status === 'cancelled').length})`,
-    },
+    { key: 'all', label: t('common.all') },
+    { key: 'completed', label: t('bookings.past') },
+    { key: 'cancelled', label: t('bookings.cancelled') },
   ];
+
+  const locationOptions = (locationsData ?? []).map((loc) => ({
+    value: loc.id,
+    label: loc.name,
+  }));
 
   return (
     <div>
@@ -365,7 +281,10 @@ export default function BookingsPage() {
       {/* ─── Tab Navigation ─────────────────────────────────────── */}
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
+        onChange={(key) => {
+          setActiveTab(key);
+          setPage(1);
+        }}
         items={tabItems}
         style={{ marginBottom: 16 }}
       />
@@ -380,27 +299,32 @@ export default function BookingsPage() {
         <Select
           placeholder={t('bookings.location')}
           value={locationFilter}
-          onChange={setLocationFilter}
+          onChange={(v) => {
+            setLocationFilter(v);
+            setPage(1);
+          }}
           allowClear
-          style={{ width: 160 }}
-          options={[
-            { value: 'Vera', label: 'Vera' },
-            { value: 'Vake', label: 'Vake' },
-            { value: 'Saburtalo', label: 'Saburtalo' },
-            { value: 'Old Tbilisi', label: 'Old Tbilisi' },
-          ]}
+          style={{ width: 200 }}
+          options={locationOptions}
         />
       </div>
 
       {/* ─── Bookings Table ─────────────────────────────────────── */}
       <Table
         columns={columns}
-        dataSource={filteredBookings}
+        dataSource={bookings}
+        loading={isLoading}
         pagination={{
-          pageSize: 10,
+          current: page,
+          pageSize,
+          total,
           showSizeChanger: true,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} of ${total} ${t('bookings.title').toLowerCase()}`,
+          onChange: (p, ps) => {
+            setPage(p);
+            setPageSize(ps);
+          },
+          showTotal: (tot, range) =>
+            `${range[0]}-${range[1]} of ${tot} ${t('bookings.title').toLowerCase()}`,
         }}
         scroll={{ x: 1200 }}
         size="middle"

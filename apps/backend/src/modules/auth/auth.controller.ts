@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   Param,
@@ -30,6 +31,13 @@ export class AuthController {
   @ApiOperation({ summary: 'Register with email and password' })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current authenticated user' })
+  getMe(@CurrentUser() user: { id: string }) {
+    return this.authService.getMe(user.id);
   }
 
   @Public()

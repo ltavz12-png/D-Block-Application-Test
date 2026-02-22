@@ -19,7 +19,7 @@ export class AuditLog {
   @Column({ name: 'actor_id', type: 'uuid', nullable: true })
   actorId: string | null;
 
-  @Column({ name: 'actor_role', length: 50, nullable: true })
+  @Column({ name: 'actor_role', type: 'varchar', length: 50, nullable: true })
   actorRole: string | null;
 
   @Column({ type: 'jsonb', nullable: true, name: 'old_values' })
@@ -28,7 +28,7 @@ export class AuditLog {
   @Column({ type: 'jsonb', nullable: true, name: 'new_values' })
   newValues: Record<string, any> | null;
 
-  @Column({ name: 'ip_address', length: 45, nullable: true })
+  @Column({ name: 'ip_address', type: 'varchar', length: 45, nullable: true })
   ipAddress: string | null;
 
   @Column({ name: 'user_agent', type: 'text', nullable: true })

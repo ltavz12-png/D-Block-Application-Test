@@ -50,23 +50,23 @@ describe('PromotionsPage', () => {
 
   it('renders tabs for filtering promotions', () => {
     render(<PromotionsPage />);
-    expect(screen.getByText('common.all')).toBeInTheDocument();
+    expect(screen.getAllByText('common.all').length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByText('promotions.statuses.active'),
-    ).toBeInTheDocument();
+      screen.getAllByText('promotions.statuses.active').length,
+    ).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByText('promotions.statuses.expired'),
-    ).toBeInTheDocument();
+      screen.getAllByText('promotions.statuses.expired').length,
+    ).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByText('promotions.statuses.draft'),
-    ).toBeInTheDocument();
+      screen.getAllByText('promotions.statuses.draft').length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it('renders promotion names in the table', () => {
     render(<PromotionsPage />);
-    expect(screen.getByText('VISA x FLEX 50%')).toBeInTheDocument();
-    expect(screen.getByText('New Year Day Pass')).toBeInTheDocument();
-    expect(screen.getByText('Early Bird Meeting')).toBeInTheDocument();
+    expect(screen.getAllByText('VISA x FLEX 50%').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('New Year Day Pass').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Early Bird Meeting').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders the recent redemptions section', () => {

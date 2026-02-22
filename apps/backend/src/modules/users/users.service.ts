@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, UserStatus } from '@/common/database/entities/user.entity';
+import { User, UserRole, UserStatus } from '@/common/database/entities/user.entity';
 import { UserAuthProvider, AuthProvider } from '@/common/database/entities/user-auth-provider.entity';
 import { SocialProfile } from '@/modules/auth/dto/social-auth.dto';
 
@@ -64,7 +64,6 @@ export class UsersService {
   async findOrCreateBySocialProfile(profile: SocialProfile): Promise<User> {
     const providerEnum = profile.provider as AuthProvider;
 
-    // Check if provider link exists
     const existingProvider = await this.authProviderRepo.findOne({
       where: { provider: providerEnum, providerId: profile.providerId },
       relations: ['user'],
@@ -74,7 +73,6 @@ export class UsersService {
       return existingProvider.user;
     }
 
-    // Check if user with same email exists (account linking)
     let user = await this.findByEmail(profile.email);
 
     if (!user) {
@@ -90,7 +88,6 @@ export class UsersService {
       user = await this.userRepo.save(user);
     }
 
-    // Link the social provider
     const authProvider = this.authProviderRepo.create({
       userId: user.id,
       provider: providerEnum,
@@ -99,6 +96,67 @@ export class UsersService {
     await this.authProviderRepo.save(authProvider);
 
     return user;
+  }
+
+  async findAll(query: {
+    search?: string;
+    role?: UserRole;
+    status?: UserStatus;
+    page?: number;
+    limit?: number;
+  }) {
+    const { search, role, status, page = 1, limit = 20 } = query;
+    const qb = this.userRepo.createQueryBuilder('user');
+
+    if (search) {
+      qb.andWhere(
+        '(user.email ILIKE :search OR user.firstName ILIKE :search OR user.lastName ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+    if (role) {
+      qb.andWhere('user.role = :role', { role });
+    }
+    if (status) {
+      qb.andWhere('user.status = :status', { status });
+    }
+
+    qb.orderBy('user.createdAt', 'DESC');
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data: data.map((u) => this.sanitizeUser(u)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async updateProfile(
+    userId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      preferredLanguage?: string;
+      notificationPreferences?: any;
+    },
+  ) {
+    const updateData: any = {};
+    if (data.firstName !== undefined) updateData.firstName = data.firstName;
+    if (data.lastName !== undefined) updateData.lastName = data.lastName;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.preferredLanguage !== undefined) updateData.preferredLanguage = data.preferredLanguage;
+    if (data.notificationPreferences !== undefined) updateData.notificationPreferences = data.notificationPreferences;
+
+    if (Object.keys(updateData).length > 0) {
+      await this.userRepo.update(userId, updateData);
+    }
+    const user = await this.findByIdOrFail(userId);
+    return this.sanitizeUser(user);
   }
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
@@ -125,5 +183,27 @@ export class UsersService {
 
   async updateLastLogin(userId: string): Promise<void> {
     await this.userRepo.update(userId, { lastLoginAt: new Date() });
+  }
+
+  private sanitizeUser(user: User) {
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      role: user.role,
+      status: user.status,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      twoFactorEnabled: user.twoFactorEnabled,
+      preferredLanguage: user.preferredLanguage,
+      profileImageUrl: user.profileImageUrl,
+      companyId: user.companyId,
+      locationId: user.locationId,
+      lastLoginAt: user.lastLoginAt,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }

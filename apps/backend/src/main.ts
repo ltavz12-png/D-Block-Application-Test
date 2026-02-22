@@ -10,10 +10,12 @@ async function bootstrap() {
   // Security
   app.use(helmet());
   app.enableCors({
-    origin: [
-      process.env.ADMIN_URL || 'http://localhost:3001',
-      process.env.APP_URL || 'http://localhost:3000',
-    ],
+    origin: process.env.NODE_ENV === 'development'
+      ? true
+      : [
+          process.env.ADMIN_URL || 'http://localhost:3001',
+          process.env.APP_URL || 'http://localhost:3000',
+        ],
     credentials: true,
   });
 

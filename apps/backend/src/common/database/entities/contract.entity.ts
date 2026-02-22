@@ -77,13 +77,13 @@ export class Contract extends BaseEntityWithCreator {
   @Column({ name: 'signed_at', type: 'timestamptz', nullable: true })
   signedAt: Date | null;
 
-  @Column({ name: 'signed_by_company', length: 255, nullable: true })
+  @Column({ name: 'signed_by_company', type: 'varchar', length: 255, nullable: true })
   signedByCompany: string | null;
 
-  @Column({ name: 'signed_by_dblock', length: 255, nullable: true })
+  @Column({ name: 'signed_by_dblock', type: 'varchar', length: 255, nullable: true })
   signedByDblock: string | null;
 
-  @Column({ name: 'docusign_envelope_id', length: 255, nullable: true })
+  @Column({ name: 'docusign_envelope_id', type: 'varchar', length: 255, nullable: true })
   docusignEnvelopeId: string | null;
 
   @Column({ type: 'jsonb', nullable: true })

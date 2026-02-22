@@ -13,7 +13,7 @@ import { authenticator } from 'otplib';
 import * as crypto from 'crypto';
 
 import { UsersService } from '@/modules/users/users.service';
-import { User } from '@/common/database/entities/user.entity';
+import { User, UserStatus } from '@/common/database/entities/user.entity';
 import { UserSession } from '@/common/database/entities/user-session.entity';
 import { UserAuthProvider, AuthProvider } from '@/common/database/entities/user-auth-provider.entity';
 
@@ -27,7 +27,7 @@ import { JwtPayload } from './strategies/jwt.strategy';
 
 const SALT_ROUNDS = 12;
 
-interface TokenPair {
+export interface TokenPair {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
@@ -75,20 +75,18 @@ export class AuthService {
       }),
     );
 
-    // Generate email verification token
-    const verifyToken = crypto.randomBytes(32).toString('hex');
-    this.verifyTokenStore.set(verifyToken, {
-      userId: user.id,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
-    });
+    // In dev mode, auto-verify email and generate tokens for immediate login
+    if (this.configService.get('app.nodeEnv') !== 'production') {
+      await this.usersService.verifyEmail(user.id);
+      user.emailVerified = true;
+      user.status = UserStatus.ACTIVE;
+    }
 
-    this.logger.log(`[MOCK EMAIL] Verification token for ${user.email}: ${verifyToken}`);
+    const tokens = await this.generateTokens(user);
 
     return {
-      message: 'Registration successful. Please verify your email.',
-      userId: user.id,
-      // In mock mode, return the token for testing
-      ...(this.configService.get('app.nodeEnv') !== 'production' && { verifyToken }),
+      user: this.sanitizeUser(user),
+      tokens,
     };
   }
 
@@ -123,9 +121,16 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     return {
-      ...tokens,
       user: this.sanitizeUser(user),
+      tokens,
     };
+  }
+
+  // ─── Get Current User ────────────────────────────────────────────
+
+  async getMe(userId: string) {
+    const user = await this.usersService.findByIdOrFail(userId);
+    return this.sanitizeUser(user);
   }
 
   // ─── Token Refresh ──────────────────────────────────────────────
@@ -141,8 +146,8 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     return {
-      ...tokens,
       user: this.sanitizeUser(user),
+      tokens,
     };
   }
 
@@ -265,8 +270,8 @@ export class AuthService {
 
     return {
       isNewUser: false,
-      ...tokens,
       user: this.sanitizeUser(user),
+      tokens,
     };
   }
 
@@ -282,8 +287,8 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     return {
-      ...tokens,
       user: this.sanitizeUser(user),
+      tokens,
       isNewUser: false,
     };
   }

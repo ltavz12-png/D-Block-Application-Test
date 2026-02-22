@@ -31,13 +31,13 @@ export class Visitor extends BaseEntity {
   @Column({ name: 'visitor_name', length: 255 })
   visitorName: string;
 
-  @Column({ name: 'visitor_email', length: 255, nullable: true })
+  @Column({ name: 'visitor_email', type: 'varchar', length: 255, nullable: true })
   visitorEmail: string | null;
 
-  @Column({ name: 'visitor_phone', length: 20, nullable: true })
+  @Column({ name: 'visitor_phone', type: 'varchar', length: 20, nullable: true })
   visitorPhone: string | null;
 
-  @Column({ name: 'visitor_company', length: 255, nullable: true })
+  @Column({ name: 'visitor_company', type: 'varchar', length: 255, nullable: true })
   visitorCompany: string | null;
 
   @Column({ type: 'text', nullable: true })
@@ -58,7 +58,7 @@ export class Visitor extends BaseEntity {
   @Column({ name: 'checked_out_at', type: 'timestamptz', nullable: true })
   checkedOutAt: Date | null;
 
-  @Column({ name: 'temp_access_key_id', length: 255, nullable: true })
+  @Column({ name: 'temp_access_key_id', type: 'varchar', length: 255, nullable: true })
   tempAccessKeyId: string | null;
 
   @Column({ name: 'notification_sent', default: false })

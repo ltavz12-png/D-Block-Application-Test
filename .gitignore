@@ -41,6 +41,7 @@ docker-compose.override.yml
 # Misc
 *.tgz
 *.log
+*.sqlite
 
 # React Native
 apps/mobile/ios/Pods/

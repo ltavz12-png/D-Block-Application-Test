@@ -27,7 +27,7 @@ export class AccessKey extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ name: 'salto_key_id', length: 255, nullable: true })
+  @Column({ name: 'salto_key_id', type: 'varchar', length: 255, nullable: true })
   saltoKeyId: string | null;
 
   @Column({ name: 'access_level', type: 'enum', enum: AccessLevel })

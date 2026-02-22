@@ -552,6 +552,57 @@ export interface SupportTicket {
   updatedAt: string;
 }
 
+export enum ProductType {
+  COWORKING_PASS = 'coworking_pass',
+  BOX = 'box',
+  OFFICE = 'office',
+  MEETING_ROOM = 'meeting_room',
+  PARKING = 'parking',
+  LOCKER = 'locker',
+  EVENT_SPACE = 'event_space',
+  CREDIT_PACKAGE = 'credit_package',
+}
+
+export enum BillingPeriod {
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  QUARTERLY = 'quarterly',
+  ANNUAL = 'annual',
+  ONE_TIME = 'one_time',
+}
+
+export interface AdminRateCode {
+  id: string;
+  code: string;
+  name: string;
+  amount: string;
+  currency: string;
+  taxRate: string;
+  conditions: Record<string, any> | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminProduct {
+  id: string;
+  name: string;
+  nameKa: string | null;
+  description: string | null;
+  descriptionKa: string | null;
+  productType: ProductType;
+  billingPeriod: BillingPeriod;
+  features: string[];
+  featuresKa: string[];
+  includedResources: Record<string, any> | null;
+  sortOrder: number;
+  isActive: boolean;
+  rateCodes: AdminRateCode[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Query Parameter Types ──────────────────────────────────────────
 
 export interface UsersQueryParams {
@@ -641,6 +692,13 @@ export interface AccessKeysQueryParams {
   userId?: string;
   locationId?: string;
   status?: AccessKeyStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface ProductsQueryParams {
+  type?: ProductType;
+  isActive?: boolean;
   page?: number;
   limit?: number;
 }

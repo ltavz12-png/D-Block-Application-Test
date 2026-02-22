@@ -183,8 +183,8 @@ describe('AuthService', () => {
         phone: registerDto.phone,
         preferredLanguage: registerDto.preferredLanguage,
       });
-      expect(result.userId).toBe('new-user-id');
-      expect(result.message).toContain('Registration successful');
+      expect(result.user.id).toBe('new-user-id');
+      expect(result.tokens).toBeDefined();
     });
 
     it('should create an EMAIL auth provider link', async () => {
@@ -202,7 +202,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('should return verifyToken in non-production mode', async () => {
+    it('should return tokens and user in non-production mode', async () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hash');
       (usersService.createUser as jest.Mock).mockResolvedValue(
         mockUser({ id: 'u1', email: registerDto.email }),
@@ -210,25 +210,20 @@ describe('AuthService', () => {
 
       const result = await service.register(registerDto);
 
-      expect(result.verifyToken).toBeDefined();
-      expect(typeof result.verifyToken).toBe('string');
+      expect(result.tokens).toBeDefined();
+      expect(result.tokens.accessToken).toBeDefined();
+      expect(result.user).toBeDefined();
     });
 
-    it('should NOT return verifyToken in production mode', async () => {
-      (configService.get as jest.Mock).mockImplementation((key: string) => {
-        if (key === 'app.nodeEnv') return 'production';
-        if (key === 'jwt.refreshExpiration') return '7d';
-        if (key === 'jwt.expiration') return '15m';
-        return undefined;
-      });
+    it('should auto-verify email in non-production mode', async () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hash');
       (usersService.createUser as jest.Mock).mockResolvedValue(
         mockUser({ id: 'u1', email: registerDto.email }),
       );
 
-      const result = await service.register(registerDto);
+      await service.register(registerDto);
 
-      expect(result.verifyToken).toBeUndefined();
+      expect(usersService.verifyEmail).toHaveBeenCalledWith('u1');
     });
   });
 
@@ -248,8 +243,8 @@ describe('AuthService', () => {
       expect(usersService.findByEmail).toHaveBeenCalledWith(loginDto.email);
       expect(bcrypt.compare).toHaveBeenCalledWith(loginDto.password, user.passwordHash);
       expect(usersService.updateLastLogin).toHaveBeenCalledWith(user.id);
-      expect((result as any).accessToken).toBeDefined();
-      expect((result as any).refreshToken).toBeDefined();
+      expect((result as any).tokens.accessToken).toBeDefined();
+      expect((result as any).tokens.refreshToken).toBeDefined();
       expect((result as any).user).toBeDefined();
       expect((result as any).user.id).toBe(user.id);
       expect((result as any).user.email).toBe(user.email);
@@ -319,7 +314,7 @@ describe('AuthService', () => {
 
       const result = await service.login({ ...loginDto, twoFactorCode: '123456' } as any);
 
-      expect((result as any).accessToken).toBeDefined();
+      expect((result as any).tokens.accessToken).toBeDefined();
       expect((result as any).user).toBeDefined();
     });
   });
@@ -339,8 +334,8 @@ describe('AuthService', () => {
 
       // Old session should be revoked
       expect(sessionRepo.update).toHaveBeenCalledWith(session.id, { isRevoked: true });
-      expect(result.accessToken).toBeDefined();
-      expect(result.refreshToken).toBeDefined();
+      expect(result.tokens.accessToken).toBeDefined();
+      expect(result.tokens.refreshToken).toBeDefined();
       expect(result.user).toBeDefined();
     });
 
@@ -470,7 +465,13 @@ describe('AuthService', () => {
         firstName: 'V',
         lastName: 'U',
       });
-      const verifyToken = regResult.verifyToken!;
+      // Register now auto-verifies in dev mode, so test verifyEmail separately
+      // Store a manual verify token
+      const verifyToken = 'manual-verify-token';
+      (service as any).verifyTokenStore.set(verifyToken, {
+        userId: 'u2',
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      });
 
       const result = await service.verifyEmail({ token: verifyToken });
 
@@ -485,27 +486,15 @@ describe('AuthService', () => {
     });
 
     it('should throw BadRequestException for expired verification token', async () => {
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hash');
-      const createdUser = mockUser({ id: 'u3' });
-      (usersService.createUser as jest.Mock).mockResolvedValue(createdUser);
-
-      const regResult = await service.register({
-        email: 'expired@example.com',
-        password: 'P@ss1234',
-        firstName: 'E',
-        lastName: 'U',
+      const verifyToken = 'expired-verify-token';
+      (service as any).verifyTokenStore.set(verifyToken, {
+        userId: 'u3',
+        expiresAt: Date.now() - 1000, // already expired
       });
-      const verifyToken = regResult.verifyToken!;
-
-      // Advance past 24h
-      const realDateNow = Date.now;
-      Date.now = jest.fn().mockReturnValue(realDateNow() + 25 * 60 * 60 * 1000);
 
       await expect(
         service.verifyEmail({ token: verifyToken }),
       ).rejects.toThrow(BadRequestException);
-
-      Date.now = realDateNow;
     });
   });
 
@@ -566,8 +555,8 @@ describe('AuthService', () => {
       });
 
       expect((result as any).isNewUser).toBe(false);
-      expect((result as any).accessToken).toBeDefined();
-      expect((result as any).refreshToken).toBeDefined();
+      expect((result as any).tokens.accessToken).toBeDefined();
+      expect((result as any).tokens.refreshToken).toBeDefined();
       expect(usersService.updateLastLogin).toHaveBeenCalledWith(user.id);
     });
 
@@ -602,8 +591,8 @@ describe('AuthService', () => {
         }),
       );
       expect(usersService.updateLastLogin).toHaveBeenCalledWith(user.id);
-      expect(result.accessToken).toBeDefined();
-      expect(result.refreshToken).toBeDefined();
+      expect(result.tokens.accessToken).toBeDefined();
+      expect(result.tokens.refreshToken).toBeDefined();
       expect(result.user.id).toBe('social-user-1');
       expect(result.isNewUser).toBe(false);
     });
