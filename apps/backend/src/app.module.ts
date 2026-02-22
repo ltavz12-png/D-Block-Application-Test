@@ -59,7 +59,7 @@ import { MonitoringModule } from './common/monitoring/monitoring.module';
         password: config.get<string>('database.password') || undefined,
         database: config.get<string>('database.name'),
         entities: [__dirname + '/common/database/entities/*.entity{.ts,.js}'],
-        synchronize: config.get<string>('app.nodeEnv') === 'development',
+        synchronize: ['development', 'test'].includes(config.get<string>('app.nodeEnv') ?? ''),
         logging: false,
       }),
     }),
