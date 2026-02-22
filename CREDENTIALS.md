@@ -1,6 +1,6 @@
 # D Block Workspace - Credentials & Setup
 
-> Last verified: 2026-02-22 — All tests passing, API functional, TypeScript zero errors
+> Last verified: 2026-02-22 — All tests passing, CI green, TypeScript zero errors, Expo SDK 54 + Xcode 26
 
 ---
 
@@ -47,9 +47,12 @@
 - **Pages**: Dashboard, Finance (Revenue, Invoices, Payments, Accounting Periods, Tax Reports), B2B, Operations (Visitors, Occupancy, Resources, Support), Settings (General, Notifications, Promotions, Analytics), Reports
 
 ## Mobile App (React Native + Expo)
-- **URL (Web)**: http://localhost:8081
-- **Framework**: Expo SDK 52 + Expo Router
+- **URL (Web Preview)**: http://localhost:8081
+- **Framework**: Expo SDK 54 + Expo Router v6 + React Native 0.81.5 + React 19.1
+- **Build System**: EAS Build with Xcode 26 (iOS 26 SDK) — `macos-sequoia-15.6-xcode-26.0`
+- **Bundle ID**: `com.adjaragroup.dblock`
 - **Screens**: Splash, Welcome, Login, Register, OTP, Home, Bookings, Access, Community, Profile
+- **New Architecture**: Enabled (`newArchEnabled: true`)
 
 ---
 
@@ -272,7 +275,7 @@ All external integrations run in mock mode for local development:
 |-------|-----------|------|
 | Backend API | NestJS + TypeORM + PostgreSQL | 3000 |
 | Admin Panel | Next.js 14 + Ant Design 5 + Zustand | 3001 |
-| Mobile App | React Native + Expo SDK 52 + Expo Router | 8081 |
+| Mobile App | React Native 0.81.5 + Expo SDK 54 + Expo Router v6 | 8081 |
 | Database | PostgreSQL 16 | 5432 |
 | Cache | Redis 7 (optional) | 6379 |
 | Shared Types | @dblock/shared-types | — |
@@ -284,3 +287,62 @@ Auth, Users, Locations, Resources, Bookings, Products, Payments, Passes, Credits
 - Languages: English (en) + Georgian (ka)
 - Admin: 415+ translation keys per language
 - Mobile: Full bilingual support
+
+---
+
+## External Links & Services
+
+### GitHub
+- **Repository**: https://github.com/ltavz12-png/D-Block-Application-Test
+- **CI Status**: https://github.com/ltavz12-png/D-Block-Application-Test/actions
+- **CI Pipeline**: 4 jobs — lint-and-typecheck → backend-tests + admin-tests → build
+
+### Expo / EAS
+- **Expo Project**: https://expo.dev/accounts/ltavz12/projects/d-block-application-testing
+- **Expo Project ID**: `80175473-057d-44d6-82fc-5aabde941585`
+- **Expo Owner**: `ltavz12`
+- **EAS Build Profile (preview)**: iOS App Store distribution, Xcode 26 image, auto-increment build number
+- **EAS Submit**: Auto-submit to TestFlight via ASC App ID `6759481833`
+
+### Apple Developer
+- **Team ID**: `GC28LY5WZK`
+- **Team Name**: Luka Tavzarashvili (Individual)
+- **Bundle Identifier**: `com.adjaragroup.dblock`
+- **App Store Connect App ID**: `6759481833`
+- **Distribution Certificate**: Serial `4F5F900D16991A84451762EAFDA7AC65` (Valid, expires Feb 2027)
+- **ASC API Key ID**: `3FGD3A72P8`
+
+### TestFlight
+- **App Name**: D Block Workspace
+- **TestFlight Link**: https://testflight.apple.com/join/YOUR_INVITE_CODE *(update after first build)*
+
+### Local Development URLs
+| Service | URL |
+|---------|-----|
+| Backend API | http://localhost:3000/api/v1 |
+| Swagger Docs | http://localhost:3000/api/docs |
+| Health Check | http://localhost:3000/api/v1/health |
+| Admin Panel | http://localhost:3001 |
+| Mobile (Web) | http://localhost:8081 |
+
+---
+
+## Build Commands
+
+### EAS Build (TestFlight)
+```bash
+cd apps/mobile
+npx eas-cli build --platform ios --profile preview --auto-submit
+```
+
+### Run Tests
+```bash
+# Backend (779 tests)
+cd apps/backend && npx jest
+
+# Admin (33 tests)
+cd apps/admin && npx jest
+
+# Mobile typecheck
+cd apps/mobile && npx tsc --noEmit
+```
