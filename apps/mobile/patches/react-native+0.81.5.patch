@@ -1,0 +1,17 @@
+diff --git a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
+index 2a67797..2b72202 100644
+--- a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
++++ b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
+@@ -435,7 +435,11 @@ TraceSection s(
+     @try {
+       [inv invokeWithTarget:strongModule];
+     } @catch (NSException *exception) {
+-      throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName}, methodNameStr);
++      // [iOS 26 fix] Do NOT rethrow as C++ JSError on a background dispatch queue.
++      // There is no C++ exception handler on the call stack for async void methods,
++      // so rethrowing triggers std::terminate() → abort() → SIGABRT.
++      // See: https://github.com/facebook/react-native/issues/54859
++      RCTLogError(@"[TurboModule] Exception in void method %s.%s: %@", moduleName, methodNameStr.c_str(), exception);
+     } @finally {
+       [retainedObjectsForInvocation removeAllObjects];
+     }
