@@ -31,14 +31,14 @@ export class FcmPushProvider implements IPushNotificationProvider {
       }
 
       // Attempt to load firebase-admin dynamically
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const admin = require('firebase-admin');
 
       if (!admin.apps.length) {
         const initOptions: any = {};
 
         if (credentialsPath) {
-          // eslint-disable-next-line @typescript-eslint/no-var-requires
+           
           const serviceAccount = require(credentialsPath);
           initOptions.credential = admin.credential.cert(serviceAccount);
         }
@@ -74,7 +74,7 @@ export class FcmPushProvider implements IPushNotificationProvider {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const admin = require('firebase-admin');
       const messaging = admin.messaging();
 
@@ -126,7 +126,7 @@ export class FcmPushProvider implements IPushNotificationProvider {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const admin = require('firebase-admin');
       const messaging = admin.messaging();
 

@@ -18,7 +18,7 @@ export class PosthogAnalyticsProvider implements IAnalyticsProvider, OnModuleDes
     if (apiKey) {
       try {
         // Dynamic import to avoid hard dependency
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+         
         const { PostHog } = require('posthog-node');
         this.posthogClient = new PostHog(apiKey, { host });
         this.isConfigured = true;

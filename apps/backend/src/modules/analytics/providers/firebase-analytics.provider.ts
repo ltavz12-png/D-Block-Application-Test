@@ -18,14 +18,14 @@ export class FirebaseAnalyticsProvider implements IAnalyticsProvider {
     if (projectId) {
       try {
         // Dynamic import to avoid hard dependency
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+         
         const admin = require('firebase-admin');
 
         if (!admin.apps.length) {
           const initOptions: any = { projectId };
 
           if (credentialPath) {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
+             
             const serviceAccount = require(credentialPath);
             initOptions.credential = admin.credential.cert(serviceAccount);
           } else {
